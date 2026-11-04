@@ -65,7 +65,7 @@
         🎲 Categoría Aleatoria (Sin penalización)
       </button>
       <div id="waiting-cat-msg" class="hidden text-center py-3 text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 rounded-xl">
-        Categoría elegida. Esperando a que ambos confirmen...
+        Categoría elegida. Esperando a que el rival seleccione su tema...
       </div>
     </div>
 
@@ -171,6 +171,9 @@
 
     let selectedCategory = "";
     let isRandomChoice = false;
+    let myCategorySelected = false;
+    let rivalCategorySelected = false;
+
     let currentQuestion = null;
     let selectedOptIdx = null;
     let questionStartTime = 0;
@@ -257,6 +260,11 @@
           openCategorySelection();
           break;
 
+        case 'CATEGORY_READY':
+          rivalCategorySelected = true;
+          checkStartRound();
+          break;
+
         case 'SUBMIT_ANSWER':
           rivalAnswerData = data;
           checkRoundEnd();
@@ -272,6 +280,9 @@
     }
 
     function openCategorySelection() {
+      myCategorySelected = false;
+      rivalCategorySelected = false;
+
       const grid = document.getElementById('categories-grid');
       grid.innerHTML = '';
       document.getElementById('waiting-cat-msg').classList.add('hidden');
@@ -288,21 +299,36 @@
     }
 
     function chooseCategory(cat) {
+      if(myCategorySelected) return;
+      
       selectedCategory = cat;
       isRandomChoice = (cat === 'Aleatorio');
+      myCategorySelected = true;
 
+      document.getElementById('waiting-cat-msg').classList.remove('hidden');
+
+      // Generar la pregunta propia
       let finalCat = cat;
       if(isRandomChoice) {
         finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
       }
 
-      // SELECCIÓN INDIVIDUAL: Genera la pregunta del tema propio sin afectar al rival
       const catQuestions = DB_PREGUNTAS[finalCat];
       currentQuestion = catQuestions[Math.floor(Math.random() * catQuestions.length)];
       currentQuestion.categoryName = finalCat;
 
-      loadQuestionUI(currentQuestion);
-      showScreen('screen-game');
+      // Le avisa al rival que ya eligió
+      conn.send({ type: 'CATEGORY_READY' });
+
+      checkStartRound();
+    }
+
+    function checkStartRound() {
+      // Solo arranca la pregunta cuando AMBOS hayan seleccionado su categoría
+      if(myCategorySelected && rivalCategorySelected) {
+        loadQuestionUI(currentQuestion);
+        showScreen('screen-game');
+      }
     }
 
     function loadQuestionUI(q) {
