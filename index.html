@@ -128,35 +128,52 @@
 
     const DB_PREGUNTAS = {
       "Cultura General": [
-        { q: "¿Cuál es el país más grande del mundo por superficie?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
-        { q: "¿En qué país se encuentra la torre Eiffel?", opts: ["Italia", "Francia", "España", "Alemania"], a: 1 },
-        { q: "¿Cuál es la capital de Australia?", opts: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
-        { q: "¿Quién pintó la Mona Lisa?", opts: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Miguel Ángel"], a: 2 },
-        { q: "¿En qué año llegó Cristóbal Colón a América?", opts: ["1492", "1500", "1488", "1512"], a: 0 },
-        { q: "¿Cuál es el idioma más hablado del mundo por hablantes nativos?", opts: ["Inglés", "Español", "Chino Mandarín", "Hindi"], a: 2 }
+        { id: "cg1", q: "¿Cuál es el país más grande del mundo por superficie?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
+        { id: "cg2", q: "¿En qué país se encuentra la torre Eiffel?", opts: ["Italia", "Francia", "España", "Alemania"], a: 1 },
+        { id: "cg3", q: "¿Cuál es la capital de Australia?", opts: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
+        { id: "cg4", q: "¿Quién pintó la Mona Lisa?", opts: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Miguel Ángel"], a: 2 },
+        { id: "cg5", q: "¿En qué año llegó Cristóbal Colón a América?", opts: ["1492", "1500", "1488", "1512"], a: 0 },
+        { id: "cg6", q: "¿Cuál es el idioma más hablado del mundo por hablantes nativos?", opts: ["Inglés", "Español", "Chino Mandarín", "Hindi"], a: 2 },
+        { id: "cg7", q: "¿Cuál es el océano más grande del planeta?", opts: ["Atlántico", "Pacífico", "Índico", "Ártico"], a: 1 },
+        { id: "cg8", q: "¿En qué ciudad se encuentra el Coliseo Romano?", opts: ["Atenas", "Madrid", "Roma", "París"], a: 2 },
+        { id: "cg9", q: "¿Qué país es famoso por el Taj Mahal?", opts: ["India", "Egipto", "Turquía", "Tailandia"], a: 0 },
+        { id: "cg10", q: "¿Cuál es el río más largo del mundo?", opts: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], a: 1 }
       ],
       "Ciencia": [
-        { q: "¿Cuál es el elemento químico representado por el símbolo 'O'?", opts: ["Oro", "Osmeo", "Oxígeno", "Hierro"], a: 2 },
-        { q: "¿Cuál es el planeta más grande de nuestro sistema solar?", opts: ["Saturno", "Neptuno", "Júpiter", "Tierra"], a: 2 },
-        { q: "¿Qué órgano del cuerpo humano se encarga de bombear la sangre?", opts: ["Pulmón", "Hígado", "Cerebro", "Corazón"], a: 3 },
-        { q: "¿Cuál es la velocidad de la luz en el vacío?", opts: ["150,000 km/s", "300,000 km/s", "500,000 km/s", "1,000,000 km/s"], a: 1 },
-        { q: "¿Cuántos huesos tiene un cuerpo humano adulto?", opts: ["206", "300", "180", "250"], a: 0 },
-        { q: "¿Cuál es el gas más abundante en la atmósfera terrestre?", opts: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], a: 2 }
+        { id: "c1", q: "¿Cuál es el elemento químico representado por el símbolo 'O'?", opts: ["Oro", "Osmeo", "Oxígeno", "Hierro"], a: 2 },
+        { id: "c2", q: "¿Cuál es el planeta más grande de nuestro sistema solar?", opts: ["Saturno", "Neptuno", "Júpiter", "Tierra"], a: 2 },
+        { id: "c3", q: "¿Qué órgano del cuerpo humano se encarga de bombear la sangre?", opts: ["Pulmón", "Hígado", "Cerebro", "Corazón"], a: 3 },
+        { id: "c4", q: "¿Cuál es la velocidad de la luz en el vacío aproximadamente?", opts: ["150,000 km/s", "300,000 km/s", "500,000 km/s", "1,000,000 km/s"], a: 1 },
+        { id: "c5", q: "¿Cuántos huesos tiene un cuerpo humano adulto?", opts: ["206", "300", "180", "250"], a: 0 },
+        { id: "c6", q: "¿Cuál es el gas más abundante en la atmósfera terrestre?", opts: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], a: 2 },
+        { id: "c7", q: "¿Qué animal es considerado el mamífero más grande de la Tierra?", opts: ["Elefante Africano", "Ballena Azul", "Jirafa", "Tiburón Ballena"], a: 1 },
+        { id: "c8", q: "¿Cuál es la fórmula química del agua?", opts: ["CO2", "H2O", "NaCl", "O2"], a: 1 },
+        { id: "c9", q: "¿Qué fuerza nos mantiene pegados al suelo en la Tierra?", opts: ["Magnetismo", "Fricción", "Gravedad", "Presión"], a: 2 },
+        { id: "c10", q: "¿Cuál es la estrella más cercana a la Tierra?", opts: ["Alfa Centauri", "Sirio", "El Sol", "Polaris"], a: 2 }
       ],
       "Matemáticas": [
-        { q: "¿Cuál es el resultado de 12 x 12?", opts: ["122", "144", "164", "148"], a: 1 },
-        { q: "¿Cuál es el valor aproximado de Pi (π)?", opts: ["3.1416", "2.7182", "1.6180", "3.4116"], a: 0 },
-        { q: "¿Cuánto es la raíz cuadrada de 81?", opts: ["7", "8", "9", "10"], a: 2 },
-        { q: "¿Cuál es el resultado de 7 cubed (7³)?", opts: ["243", "343", "49", "512"], a: 1 },
-        { q: "¿Cómo se llama un polígono de 8 lados?", opts: ["Hexágono", "Heptágono", "Octágono", "Decágono"], a: 2 },
-        { q: "¿Cuánto es el 20% de 150?", opts: ["25", "30", "35", "40"], a: 1 }
+        { id: "m1", q: "¿Cuál es el resultado de 12 x 12?", opts: ["122", "144", "164", "148"], a: 1 },
+        { id: "m2", q: "¿Cuál es el valor aproximado de Pi (π)?", opts: ["3.1416", "2.7182", "1.6180", "3.4116"], a: 0 },
+        { id: "m3", q: "¿Cuánto es la raíz cuadrada de 81?", opts: ["7", "8", "9", "10"], a: 2 },
+        { id: "m4", q: "¿Cuál es el resultado de 7 al cubo (7³)?", opts: ["243", "343", "49", "512"], a: 1 },
+        { id: "m5", q: "¿Cómo se llama un polígono de 8 lados?", opts: ["Hexágono", "Heptágono", "Octágono", "Decágono"], a: 2 },
+        { id: "m6", q: "¿Cuánto es el 20% de 150?", opts: ["25", "30", "35", "40"], a: 1 },
+        { id: "m7", q: "¿Cuánto es 15 + (3 x 4)?", opts: ["72", "27", "33", "60"], a: 1 },
+        { id: "m8", q: "¿Cuál es el número primo más pequeño?", opts: ["0", "1", "2", "3"], a: 2 },
+        { id: "m9", q: "Si un triángulo tiene ángulos de 90° y 45°, ¿cuánto mide el tercero?", opts: ["45°", "90°", "30°", "60°"], a: 0 },
+        { id: "m10", q: "¿Cuánto es 100 dividido entre 0.5?", opts: ["50", "200", "100", "25"], a: 1 }
       ],
       "Deportes": [
-        { q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
-        { q: "¿Qué país ha ganado más Copas Mundiales de fútbol?", opts: ["Alemania", "Brasil", "Argentina", "Italia"], a: 1 },
-        { q: "¿Cuántos jugadores hay en cancha por equipo en un partido de fútbol?", opts: ["9", "10", "11", "12"], a: 2 },
-        { q: "¿En qué deporte se utiliza el término 'Strike'?", opts: ["Béisbol", "Tenis", "Baloncesto", "Fútbol"], a: 0 },
-        { q: "¿Quién ha ganado más títulos de Grand Slam en tenis masculino?", opts: ["Roger Federer", "Rafael Nadal", "Novak Djokovic", "Carlos Alcaraz"], a: 2 }
+        { id: "d1", q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
+        { id: "d2", q: "¿Qué país ha ganado más Copas Mundiales de fútbol?", opts: ["Alemania", "Brasil", "Argentina", "Italia"], a: 1 },
+        { id: "d3", q: "¿Cuántos jugadores hay en cancha por equipo en un partido de fútbol?", opts: ["9", "10", "11", "12"], a: 2 },
+        { id: "d4", q: "¿En qué deporte se utiliza el término 'Strike'?", opts: ["Béisbol", "Tenis", "Baloncesto", "Fútbol"], a: 0 },
+        { id: "d5", q: "¿Quién ha ganado más títulos de Grand Slam en tenis masculino?", opts: ["Roger Federer", "Rafael Nadal", "Novak Djokovic", "Carlos Alcaraz"], a: 2 },
+        { id: "d6", q: "¿Cuánto dura un partido formal de fútbol sin tiempo extra?", opts: ["80 minutos", "90 minutos", "100 minutos", "60 minutos"], a: 1 },
+        { id: "d7", q: "¿En qué país se inventó el baloncesto?", opts: ["Estados Unidos", "Canadá", "Inglaterra", "Francia"], a: 0 },
+        { id: "d8", q: "¿Cuántos puntos vale un tiro libre en baloncesto?", opts: ["1 punto", "2 puntos", "3 puntos", "0.5 puntos"], a: 0 },
+        { id: "d9", q: "¿En qué estilo de natación se nada boca arriba?", opts: ["Crowl", "Espalda", "Pecho", "Mariposa"], a: 1 },
+        { id: "d10", q: "¿Qué tarjeta en fútbol implica la expulsión directa de un jugador?", opts: ["Tarjeta Azul", "Tarjeta Amarilla", "Tarjeta Roja", "Tarjeta Verde"], a: 2 }
       ]
     };
 
@@ -173,6 +190,9 @@
     let isRandomChoice = false;
     let myCategorySelected = false;
     let rivalCategorySelected = false;
+
+    // HISTORIAL DE PREGUNTAS USADAS (Para evitar repeticiones)
+    let usedQuestionIds = new Set();
 
     let currentQuestion = null;
     let selectedOptIdx = null;
@@ -307,24 +327,32 @@
 
       document.getElementById('waiting-cat-msg').classList.remove('hidden');
 
-      // Generar la pregunta propia
       let finalCat = cat;
       if(isRandomChoice) {
         finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
       }
 
+      // FILTRAR PREGUNTAS NO REPETIDAS EN LA PARTIDA
       const catQuestions = DB_PREGUNTAS[finalCat];
-      currentQuestion = catQuestions[Math.floor(Math.random() * catQuestions.length)];
+      let availableQuestions = catQuestions.filter(q => !usedQuestionIds.has(q.id));
+
+      // Si por alguna razón ya se usaron todas las de la categoría, reiniciar filtro de esa lista
+      if(availableQuestions.length === 0) {
+        availableQuestions = catQuestions;
+      }
+
+      const pickedQ = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+      usedQuestionIds.add(pickedQ.id); // Guardar en el historial de vistas
+
+      currentQuestion = JSON.parse(JSON.stringify(pickedQ));
       currentQuestion.categoryName = finalCat;
 
-      // Le avisa al rival que ya eligió
       conn.send({ type: 'CATEGORY_READY' });
 
       checkStartRound();
     }
 
     function checkStartRound() {
-      // Solo arranca la pregunta cuando AMBOS hayan seleccionado su categoría
       if(myCategorySelected && rivalCategorySelected) {
         loadQuestionUI(currentQuestion);
         showScreen('screen-game');
@@ -457,7 +485,6 @@
           rivalPointsGained = 1;
         }
       } else {
-        // CÁLCULO DE PENALIZACIÓN INDIVIDUAL
         if (myCorrect) {
           myPointsGained = 1;
         } else {
@@ -471,11 +498,9 @@
         }
       }
 
-      // Evitar puntajes negativos
       myScore = Math.max(0, myScore + myPointsGained);
       rivalScore = Math.max(0, rivalScore + rivalPointsGained);
 
-      // Actualización del marcador
       document.getElementById('label-me-score').innerHTML = `${myScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
       document.getElementById('label-rival-score').innerHTML = `${rivalScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
 
