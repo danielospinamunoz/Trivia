@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -66,7 +65,7 @@ HTML
         🎲 Categoría Aleatoria (Sin penalización)
       </button>
       <div id="waiting-cat-msg" class="hidden text-center py-3 text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 rounded-xl">
-        Categoría elegida. Esperando a que el rival seleccione...
+        Categoría elegida. Esperando a que ambos confirmen...
       </div>
     </div>
 
@@ -124,7 +123,7 @@ HTML
   </div>
 
   <script>
-    // 4 CATEGORÍAS EXACTAS CON BANCO AMPLIO
+    // 4 CATEGORÍAS EXACTAS
     const MAIN_CATEGORIES = ["Cultura General", "Ciencia", "Matemáticas", "Deportes"];
 
     const DB_PREGUNTAS = {
@@ -258,12 +257,6 @@ HTML
           openCategorySelection();
           break;
 
-        case 'START_QUESTION':
-          currentQuestion = data.question;
-          loadQuestionUI(currentQuestion);
-          showScreen('screen-game');
-          break;
-
         case 'SUBMIT_ANSWER':
           rivalAnswerData = data;
           checkRoundEnd();
@@ -297,24 +290,19 @@ HTML
     function chooseCategory(cat) {
       selectedCategory = cat;
       isRandomChoice = (cat === 'Aleatorio');
-      document.getElementById('waiting-cat-msg').classList.remove('hidden');
 
-      if(isHost) {
-        let finalCat = cat;
-        if(isRandomChoice) {
-          finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
-        }
-        const catQuestions = DB_PREGUNTAS[finalCat];
-        const randomQ = catQuestions[Math.floor(Math.random() * catQuestions.length)];
-        randomQ.categoryName = finalCat;
-
-        setTimeout(() => {
-          conn.send({ type: 'START_QUESTION', question: randomQ });
-          currentQuestion = randomQ;
-          loadQuestionUI(currentQuestion);
-          showScreen('screen-game');
-        }, 500);
+      let finalCat = cat;
+      if(isRandomChoice) {
+        finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
       }
+
+      // SELECCIÓN INDIVIDUAL: Genera la pregunta del tema propio sin afectar al rival
+      const catQuestions = DB_PREGUNTAS[finalCat];
+      currentQuestion = catQuestions[Math.floor(Math.random() * catQuestions.length)];
+      currentQuestion.categoryName = finalCat;
+
+      loadQuestionUI(currentQuestion);
+      showScreen('screen-game');
     }
 
     function loadQuestionUI(q) {
@@ -343,7 +331,6 @@ HTML
       startTimer();
     }
 
-    // Permite cambiar opción libremente antes de confirmar
     function selectOption(idx) {
       if(myAnswerData !== null) return;
       selectedOptIdx = idx;
@@ -396,6 +383,7 @@ HTML
 
       myAnswerData = {
         opt: finalChoice,
+        correctOpt: currentQuestion.a,
         timeMs: timeSpentMs,
         isRandom: isRandomChoice
       };
@@ -406,6 +394,7 @@ HTML
       conn.send({
         type: 'SUBMIT_ANSWER',
         opt: myAnswerData.opt,
+        correctOpt: myAnswerData.correctOpt,
         timeMs: myAnswerData.timeMs,
         isRandom: myAnswerData.isRandom
       });
@@ -420,9 +409,8 @@ HTML
     }
 
     function evaluateRoundResults() {
-      const correctOpt = currentQuestion.a;
-      const myCorrect = (myAnswerData.opt === correctOpt);
-      const rivalCorrect = (rivalAnswerData.opt === correctOpt);
+      const myCorrect = (myAnswerData.opt === myAnswerData.correctOpt);
+      const rivalCorrect = (rivalAnswerData.opt === rivalAnswerData.correctOpt);
 
       let myPointsGained = 0;
       let rivalPointsGained = 0;
@@ -443,11 +431,10 @@ HTML
           rivalPointsGained = 1;
         }
       } else {
-        // CÁLCULO DE PENALIZACIÓN / PUNTAJE
+        // CÁLCULO DE PENALIZACIÓN INDIVIDUAL
         if (myCorrect) {
           myPointsGained = 1;
         } else {
-          // Si eligió categoría específica y falló -> resta 1 punto. Si fue aleatorio -> 0
           myPointsGained = myAnswerData.isRandom ? 0 : -1;
         }
 
@@ -462,7 +449,7 @@ HTML
       myScore = Math.max(0, myScore + myPointsGained);
       rivalScore = Math.max(0, rivalScore + rivalPointsGained);
 
-      // Actualización de marcador
+      // Actualización del marcador
       document.getElementById('label-me-score').innerHTML = `${myScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
       document.getElementById('label-rival-score').innerHTML = `${rivalScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
 
