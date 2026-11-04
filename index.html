@@ -1,538 +1,468 @@
+HTML
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trivia Multijugador Online 1v1</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Trivia 1v1 Online - Edición Salón</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PeerJS WebRTC P2P CDN -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <!-- React & ReactDOM CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <!-- Babel Standalone para JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    @keyframes spinWheel {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(1800deg); }
-    }
-  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
-  <div id="root"></div>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+  <div id="app" class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+      <h1 class="text-xl font-black tracking-wider text-indigo-400">TRIVIA 1v1</h1>
+      <div id="room-tag" class="hidden text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full font-mono">
+        SALA: <span id="display-room-code" class="text-indigo-400 font-bold"></span>
+      </div>
+    </div>
 
-    // BANCO DE PREGUNTAS POR CATEGORÍA
-    const CATEGORIES = [
-      { id: 'cultura', name: 'Cultura General', color: 'from-amber-500 to-orange-600' },
-      { id: 'matematicas', name: 'Matemáticas', color: 'from-blue-500 to-indigo-600' },
-      { id: 'ciencias', name: 'Ciencias', color: 'from-emerald-500 to-teal-600' },
-      { id: 'deporte', name: 'Deportes', color: 'from-rose-500 to-red-600' }
+    <!-- PANTALLA: LOBBY INICIAL -->
+    <div id="screen-lobby" class="space-y-4">
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-slate-400 mb-2">Tu Nombre / Apodo</label>
+        <input type="text" id="input-username" placeholder="Ej: Daniel" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div class="pt-2 space-y-3">
+        <button onclick="createRoom()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30">
+          Crear Nueva Sala
+        </button>
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-800"></div>
+          <span class="flex-shrink mx-4 text-slate-500 text-xs uppercase">o unirse a una</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="input-room-code" placeholder="Código de 5 letras" class="uppercase w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center tracking-widest font-mono text-white focus:outline-none focus:border-indigo-500">
+          <button onclick="joinRoom()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold px-6 rounded-xl transition">
+            Unirse
+          </button>
+        </div>
+      </div>
+      <p id="lobby-status" class="text-xs text-center text-amber-400 min-h-[1rem]"></p>
+    </div>
+
+    <!-- PANTALLA: ESPERANDO RIVAL -->
+    <div id="screen-waiting" class="hidden text-center py-8 space-y-4">
+      <div class="animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+      <p class="text-slate-300 font-medium">Esperando que se conecte tu rival...</p>
+      <p class="text-xs text-slate-500">Comparte el código de sala con tu compañero.</p>
+    </div>
+
+    <!-- PANTALLA: JUEGO -->
+    <div id="screen-game" class="hidden space-y-5">
+      <!-- Marcador -->
+      <div class="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+        <div class="text-center p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <p id="label-me-name" class="text-xs text-slate-400 truncate">Tú</p>
+          <p id="label-me-score" class="text-2xl font-black text-indigo-400">0 <span class="text-xs text-slate-500 font-normal">/ 5 pts</span></p>
+        </div>
+        <div class="text-center p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <p id="label-rival-name" class="text-xs text-slate-400 truncate">Rival</p>
+          <p id="label-rival-score" class="text-2xl font-black text-rose-400">0 <span class="text-xs text-slate-500 font-normal">/ 5 pts</span></p>
+        </div>
+      </div>
+
+      <!-- Temporizador -->
+      <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+        <div id="timer-bar" class="bg-indigo-500 h-full w-full transition-all duration-1000 linear"></div>
+      </div>
+
+      <!-- Área de Pregunta -->
+      <div id="question-box" class="space-y-4">
+        <div class="flex justify-between items-center text-xs text-slate-400">
+          <span id="category-badge" class="bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">Tema</span>
+          <span id="timer-text" class="font-mono text-amber-400 font-bold">15s</span>
+        </div>
+        
+        <h2 id="question-text" class="text-base font-semibold leading-snug text-slate-100 min-h-[3rem]">Cargando pregunta...</h2>
+
+        <div id="options-container" class="space-y-2.5">
+          <!-- Botones de opciones insertados dinámicamente -->
+        </div>
+
+        <button id="btn-confirm-answer" onclick="confirmAnswer()" disabled class="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition">
+          Confirmar Respuesta
+        </button>
+      </div>
+
+      <div id="waiting-rival-msg" class="hidden text-center py-4 text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 rounded-xl">
+        Respuesta enviada. Esperando que el rival responda...
+      </div>
+    </div>
+
+    <!-- PANTALLA: RESULTADO FINAL -->
+    <div id="screen-gameover" class="hidden text-center py-8 space-y-6">
+      <div id="gameover-icon" class="text-5xl">🏆</div>
+      <div>
+        <h2 id="gameover-title" class="text-2xl font-black text-white">¡Victoria!</h2>
+        <p id="gameover-reason" class="text-xs text-slate-400 mt-1">Llegaste primero a los 5 puntos</p>
+      </div>
+      <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl transition">
+        Volver al Menú
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // BANCO MASIVO DE PREGUNTAS (Sin repeticiones cortas)
+    const QUESTION_BANK = [
+      // Cine & Serie
+      { cat: "Cine", q: "¿Cuál es la película más taquillera de la historia?", opts: ["Avatar", "Avengers: Endgame", "Titanic", "Star Wars VII"], a: 0 },
+      { cat: "Cine", q: "¿Quién dirigió la película 'El Señor de los Anillos'?", opts: ["Steven Spielberg", "Peter Jackson", "Christopher Nolan", "James Cameron"], a: 1 },
+      { cat: "Cine", q: "¿Qué actor interpreta a Iron Man en el UCM?", opts: ["Chris Evans", "Robert Downey Jr.", "Chris Hemsworth", "Mark Ruffalo"], a: 1 },
+      { cat: "Cine", q: "¿Cómo se llama el reino congelado de Elsa en Frozen?", opts: ["Arendelle", "Corona", "Aldovia", "Genovia"], a: 0 },
+      { cat: "Cine", q: "¿Qué película ganó el Óscar a Mejor Película en 2020?", opts: ["1917", "Parasite", "Joker", "Once Upon a Time in Hollywood"], a: 1 },
+      { cat: "Cine", q: "¿Cuál es el nombre del ogro verde de DreamWorks?", opts: ["Fiona", "Burro", "Shrek", "Lord Farquaad"], a: 2 },
+      { cat: "Cine", q: "¿Qué mago tiene una cicatriz en forma de rayo?", opts: ["Ron Weasley", "Harry Potter", "Draco Malfoy", "Dumbledore"], a: 1 },
+      { cat: "Cine", q: "¿En qué año se estrenó la primera película de Toy Story?", opts: ["1992", "1995", "1998", "2000"], a: 1 },
+      
+      // Ciencia & Naturaleza
+      { cat: "Ciencia", q: "¿Cuál es el planeta más grande del sistema solar?", opts: ["Saturno", "Neptuno", "Júpiter", "Tierra"], a: 2 },
+      { cat: "Ciencia", q: "¿Cuál es el símbolo químico del Oro?", opts: ["Ag", "Au", "Fe", "Or"], a: 1 },
+      { cat: "Ciencia", q: "¿Qué órgano del cuerpo humano bombea sangre?", opts: ["Pulmón", "Hígado", "Cerebro", "Corazón"], a: 3 },
+      { cat: "Ciencia", q: "¿Cuál es el gas más abundante en la atmósfera terrestre?", opts: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], a: 2 },
+      { cat: "Ciencia", q: "¿Cuántos huesos tiene el cuerpo humano adulto?", opts: ["206", "300", "180", "250"], a: 0 },
+      { cat: "Ciencia", q: "¿Qué velocidad tiene la luz aproximadamente en el vacío?", opts: ["150,000 km/s", "300,000 km/s", "500,000 km/s", "1,000,000 km/s"], a: 1 },
+      { cat: "Ciencia", q: "¿Cuál es el animal terrestre más rápido del mundo?", opts: ["León", "Guepardo", "Gacela", "Caballo"], a: 1 },
+      { cat: "Ciencia", q: "¿Qué mamífero es capaz de volar?", opts: ["Ardilla voladora", "Murciélago", "Pingüino", "Ornitorrinco"], a: 1 },
+
+      // Geografía
+      { cat: "Geografía", q: "¿Cuál es la capital de Australia?", opts: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
+      { cat: "Geografía", q: "¿En qué continente se encuentra Egipto?", opts: ["Asia", "África", "Europa", "Oceanía"], a: 1 },
+      { cat: "Geografía", q: "¿Cuál es el río más largo del mundo?", opts: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], a: 1 },
+      { cat: "Geografía", q: "¿Qué país tiene la mayor superficie territorial?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
+      { cat: "Geografía", q: "¿Cuál es el océano más grande de la Tierra?", opts: ["Atlántico", "Índico", "Pacífico", "Ártico"], a: 2 },
+      { cat: "Geografía", q: "¿En qué país se encuentran las ruinas de Machu Picchu?", opts: ["Colombia", "Chile", "Perú", "Bolivia"], a: 2 },
+      { cat: "Geografía", q: "¿Cuál es la capital de Francia?", opts: ["Marsella", "París", "Lyon", "Niza"], a: 1 },
+      { cat: "Geografía", q: "¿Qué desierto es el más cálido y extenso del mundo?", opts: ["Atacama", "Gobi", "Sahara", "Kalahari"], a: 2 },
+
+      // Historia
+      { cat: "Historia", q: "¿En qué año llegó Cristóbal Colón a América?", opts: ["1492", "1500", "1488", "1512"], a: 0 },
+      { cat: "Historia", q: "¿Quién fue el primer presidente de Estados Unidos?", opts: ["Abraham Lincoln", "Thomas Jefferson", "George Washington", "John Adams"], a: 2 },
+      { cat: "Historia", q: "¿En qué año finalizó la Segunda Guerra Mundial?", opts: ["1918", "1939", "1945", "1950"], a: 2 },
+      { cat: "Historia", q: "¿Qué antigua civilización construyó las pirámides de Guiza?", opts: ["Maya", "Griega", "Egipcia", "Romana"], a: 2 },
+      { cat: "Historia", q: "¿Quién fue conocido como el 'Libertador de América'?", opts: ["Simón Bolívar", "José de San Martín", "Bernardo O'Higgins", "Miguel Hidalgo"], a: 0 },
+      { cat: "Historia", q: "¿En qué país surgió la Revolución Industrial?", opts: ["Francia", "Alemania", "Gran Bretaña", "Estados Unidos"], a: 2 },
+
+      // Deportes
+      { cat: "Deportes", q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
+      { cat: "Deportes", q: "¿Qué país ha ganado más Copas del Mundo de fútbol?", opts: ["Alemania", "Brasil", "Argentina", "Italia"], a: 1 },
+      { cat: "Deportes", q: "¿Cuántos jugadores hay en un equipo de baloncesto en cancha?", opts: ["5", "6", "7", "11"], a: 0 },
+      { cat: "Deportes", q: "¿En qué deporte se utiliza el término 'Home Run'?", opts: ["Béisbol", "Fútbol Americano", "Golf", "Tenis"], a: 0 },
+      { cat: "Deportes", q: "¿Quién es considerado el rey del tenis en tierra batida con más Roland Garros?", opts: ["Roger Federer", "Novak Djokovic", "Rafael Nadal", "Carlos Alcaraz"], a: 2 }
     ];
 
-    const QUESTION_BANK = {
-      cultura: [
-        { question: "¿Cuál es el país más grande del mundo por superficie?", options: ["Canadá", "China", "Rusia", "Estados Unidos"], answer: 2 },
-        { question: "¿En qué año llegó el ser humano a la Luna?", options: ["1965", "1969", "1972", "1959"], answer: 1 },
-        { question: "¿Quién pintó la Mona Lisa?", options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"], answer: 2 },
-        { question: "¿Cuál es la capital de Japón?", options: ["Kioto", "Osaka", "Tokio", "Hiroshima"], answer: 2 },
-        { question: "¿Qué idioma tiene más hablantes nativos en el mundo?", options: ["Inglés", "Español", "Chino Mandarín", "Hindi"], answer: 2 }
-      ],
-      matematicas: [
-        { question: "¿Cuál es la raíz cuadrada de 144?", options: ["10", "11", "12", "14"], answer: 2 },
-        { question: "¿Cuánto es 7 x 8?", options: ["54", "56", "62", "48"], answer: 1 },
-        { question: "¿Cómo se llama un polígono de 8 lados?", options: ["Hexágono", "Heptágono", "Octágono", "Decágono"], answer: 2 },
-        { question: "Si un triángulo tiene ángulos de 90° y 45°, ¿cuánto mide el tercero?", options: ["45°", "60°", "30°", "90°"], answer: 0 },
-        { question: "Resuelve: 2 + 3 x 4", options: ["20", "14", "18", "12"], answer: 1 }
-      ],
-      ciencias: [
-        { question: "¿Cuál es el elemento químico con símbolo 'O'?", options: ["Oro", "Osmo", "Oxígeno", "Oganesón"], answer: 2 },
-        { question: "¿Qué planeta es conocido como el 'Planeta Rojo'?", options: ["Júpiter", "Venus", "Marte", "Saturno"], answer: 2 },
-        { question: "¿Cuál es el órgano más grande del cuerpo humano?", options: ["Hígado", "Cerebro", "Piel", "Corazón"], answer: 2 },
-        { question: "¿Qué gas absorben las plantas para la fotosíntesis?", options: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], answer: 1 },
-        { question: "¿Cuál es la velocidad aproximada de la luz?", options: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "50,000 km/s"], answer: 0 }
-      ],
-      deporte: [
-        { question: "¿Cada cuántos años se celebran los Juegos Olímpicos?", options: ["2 años", "3 años", "4 años", "5 años"], answer: 2 },
-        { question: "¿Cuántos jugadores de fútbol hay en campo por equipo?", options: ["9", "10", "11", "12"], answer: 2 },
-        { question: "¿En qué deporte se utiliza el término 'Home Run'?", options: ["Béisbol", "Baloncesto", "Tenis", "Golf"], answer: 0 },
-        { question: "¿Cuánto dura un partido de fútbol profesional sin prórroga?", options: ["80 min", "90 min", "100 min", "60 min"], answer: 1 },
-        { question: "¿En qué país se inventó el baloncesto?", options: ["Canadá", "Estados Unidos", "Inglaterra", "Grecia"], answer: 1 }
-      ]
-    };
+    // ESTADO DEL JUEGO
+    let peer = null;
+    let conn = null;
+    let isHost = false;
+    let myName = "";
+    let rivalName = "Rival";
+    let myScore = 0;
+    let rivalScore = 0;
+    
+    let currentQuestionIdx = -1;
+    let selectedOptIdx = null;
+    let timeSpentMs = 0;
+    let questionStartTime = 0;
+    
+    let timerInterval = null;
+    let secondsLeft = 15;
+    
+    let myAnswerData = null;
+    let rivalAnswerData = null;
 
-    function App() {
-      const [myName, setMyName] = useState('');
-      const [rivalName, setRivalName] = useState('');
-      const [roomId, setRoomId] = useState('');
-      const [inputRoomCode, setInputRoomCode] = useState('');
-      const [status, setStatus] = useState('lobby'); // lobby, waiting, choosing, answering, result, finished
-      
-      const [myScore, setMyScore] = useState(0);
-      const [rivalScore, setRivalScore] = useState(0);
-
-      const [myCategory, setMyCategory] = useState(null);
-      const [rivalCategory, setRivalCategory] = useState(null);
-      const [mySelectionType, setMySelectionType] = useState(null); // 'chosen' | 'random'
-      
-      const [myQuestion, setMyQuestion] = useState(null);
-      const [myAnswer, setMyAnswer] = useState(null); // opción seleccionada temporalmente
-      const [rivalAnswer, setRivalAnswer] = useState(null);
-      const [isConfirmed, setIsConfirmed] = useState(false); // confirma envío definitivo
-
-      const [timer, setTimer] = useState(15);
-      const [isSpinning, setIsSpinning] = useState(false);
-      const [wheelRotation, setWheelRotation] = useState(0);
-      const [copied, setCopied] = useState(false);
-
-      const peerRef = useRef(null);
-      const connRef = useRef(null);
-
-      // CREAR SALA P2P
-      const createRoom = () => {
-        const name = myName.trim() || 'Anfitrión';
-        setMyName(name);
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const peerId = 'trivia-room-' + code;
-
-        const peer = new Peer(peerId);
-        peerRef.current = peer;
-
-        peer.on('open', () => {
-          setRoomId(code);
-          setStatus('waiting');
-        });
-
-        peer.on('connection', (conn) => {
-          connRef.current = conn;
-          conn.on('open', () => {
-            conn.send({ type: 'INIT', name });
-          });
-          conn.on('data', (data) => handleIncomingData(data, name));
-        });
-
-        peer.on('error', (err) => {
-          console.error("Error Peer:", err);
-          alert("Error de conexión. Inténtalo de nuevo.");
-        });
-      };
-
-      // UNIRSE A SALA P2P
-      const joinRoom = () => {
-        const name = myName.trim() || 'Jugador 2';
-        setMyName(name);
-        const code = inputRoomCode.trim().toUpperCase();
-        if (!code) return;
-
-        const peer = new Peer();
-        peerRef.current = peer;
-
-        peer.on('open', () => {
-          const conn = peer.connect('trivia-room-' + code);
-          connRef.current = conn;
-
-          conn.on('open', () => {
-            setRoomId(code);
-            conn.send({ type: 'INIT', name });
-            setStatus('choosing');
-          });
-
-          conn.on('data', (data) => handleIncomingData(data, name));
-        });
-
-        peer.on('error', (err) => {
-          alert("No se pudo conectar a la sala. Verifica el código.");
-        });
-      };
-
-      // MANEJO DE MENSAJES DE RED
-      const handleIncomingData = (data, name) => {
-        if (data.type === 'INIT') {
-          setRivalName(data.name);
-          setStatus('choosing');
-        }
-        if (data.type === 'CATEGORY_CHOSEN') {
-          setRivalCategory(data.category);
-        }
-        if (data.type === 'ANSWER_SUBMITTED') {
-          setRivalAnswer(data.answer);
-          if (data.score !== undefined) {
-            setRivalScore(data.score); // Actualización inmediata del puntaje del rival
-          }
-        }
-        if (data.type === 'NEXT_ROUND') {
-          startNextRoundLocal();
-        }
-      };
-
-      // ELEGIR CATEGORÍA INDIVIDUALMENTE
-      const chooseCategory = (catId, selectionType) => {
-        setMyCategory(catId);
-        setMySelectionType(selectionType);
-        const list = QUESTION_BANK[catId];
-        const q = list[Math.floor(Math.random() * list.length)];
-        setMyQuestion(q);
-
-        if (connRef.current) {
-          connRef.current.send({ type: 'CATEGORY_CHOSEN', category: catId });
-        }
-      };
-
-      // GIRAR RULETA ALEATORIA GRATIS (0 PTS PENALIZACIÓN)
-      const spinRoulette = () => {
-        if (isSpinning) return;
-        setIsSpinning(true);
-        const randomIdx = Math.floor(Math.random() * CATEGORIES.length);
-        const targetCat = CATEGORIES[randomIdx];
-
-        setWheelRotation(prev => prev + 1800 + (360 - (randomIdx * 90 + 45)));
-
-        setTimeout(() => {
-          setIsSpinning(false);
-          chooseCategory(targetCat.id, 'random');
-        }, 2000);
-      };
-
-      // AMBOS ELIGIERON SU TEMA -> PASAN A RESPONDER SIMULTÁNEAMENTE
-      useEffect(() => {
-        if (myCategory && rivalCategory && status === 'choosing') {
-          setStatus('answering');
-          setTimer(15);
-          setIsConfirmed(false);
-        }
-      }, [myCategory, rivalCategory, status]);
-
-      // CRONÓMETRO DE 15 SEGUNDOS
-      useEffect(() => {
-        let t = null;
-        if (status === 'answering' && timer > 0) {
-          t = setInterval(() => setTimer(prev => prev - 1), 1000);
-        } else if (timer === 0 && status === 'answering' && !isConfirmed) {
-          confirmFinalAnswer();
-        }
-        return () => clearInterval(t);
-      }, [status, timer, isConfirmed, myAnswer]);
-
-      // SELECCIONAR / CAMBIAR OPCIÓN TEMPORALMENTE
-      const selectOption = (optIdx) => {
-        if (isConfirmed) return;
-        setMyAnswer(optIdx);
-      };
-
-      // CONFIRMAR RESPUESTA DEFINITIVA Y ENVIAR AL RIVAL
-      const confirmFinalAnswer = () => {
-        setIsConfirmed(true);
-        const finalAns = myAnswer !== null ? myAnswer : -1;
-        
-        let newMyScore = myScore;
-        if (myQuestion && finalAns === myQuestion.answer) {
-          newMyScore += 1;
-        } else if (mySelectionType === 'chosen' && finalAns !== -1) {
-          newMyScore = Math.max(0, newMyScore - 1);
-        }
-        setMyScore(newMyScore);
-
-        if (connRef.current) {
-          connRef.current.send({ 
-            type: 'ANSWER_SUBMITTED', 
-            answer: finalAns,
-            score: newMyScore 
-          });
-        }
-      };
-
-      // EVALUACIÓN DE FIN DE RONDA CUANDO AMBOS RESPONDEN
-      useEffect(() => {
-        if (isConfirmed && rivalAnswer !== null && status === 'answering') {
-          if (myScore >= 5 || rivalScore >= 5) {
-            setStatus('finished');
-          } else {
-            setStatus('result');
-          }
-        }
-      }, [isConfirmed, rivalAnswer, myScore, rivalScore, status]);
-
-      // REINICIAR DATOS PARA LA SIGUIENTE RONDA
-      const startNextRoundLocal = () => {
-        setMyCategory(null);
-        setRivalCategory(null);
-        setMySelectionType(null);
-        setMyQuestion(null);
-        setMyAnswer(null);
-        setRivalAnswer(null);
-        setIsConfirmed(false);
-        setStatus('choosing');
-      };
-
-      const triggerNextRound = () => {
-        startNextRoundLocal();
-        if (connRef.current) {
-          connRef.current.send({ type: 'NEXT_ROUND' });
-        }
-      };
-
-      const copyCode = () => {
-        navigator.clipboard.writeText(roomId);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      };
-
-      return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 max-w-xl mx-auto">
-          {/* LOBBY INICIAL */}
-          {status === 'lobby' && (
-            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                  Trivia Online 1v1
-                </h1>
-                <p className="text-sm text-slate-400">Juega en tiempo real desde cualquier dispositivo.</p>
-              </div>
-
-              <div className="space-y-4 text-left">
-                <div>
-                  <label className="text-xs font-bold uppercase text-slate-400 block mb-1">Tu Nombre</label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Danielo, Valen..."
-                    value={myName}
-                    onChange={(e) => setMyName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <button
-                  onClick={createRoom}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
-                >
-                  ⚡ Crear Nueva Sala
-                </button>
-
-                <div className="flex items-center gap-2 py-2">
-                  <div className="flex-1 h-px bg-slate-800"></div>
-                  <span className="text-xs text-slate-500 uppercase">o unirse</span>
-                  <div className="flex-1 h-px bg-slate-800"></div>
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="CÓDIGO DE SALA"
-                    value={inputRoomCode}
-                    onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center uppercase font-mono font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  <button
-                    onClick={joinRoom}
-                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl border border-slate-700"
-                  >
-                    Unirse
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ESPERANDO JUGADOR 2 */}
-          {status === 'waiting' && (
-            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
-              <h2 className="text-2xl font-bold text-white">Esperando al Rival...</h2>
-              <p className="text-sm text-slate-400">Comparte el siguiente código para iniciar:</p>
-
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
-                <span className="text-3xl font-mono font-black text-indigo-400 tracking-wider">{roomId}</span>
-                <button onClick={copyCode} className="bg-indigo-600/20 text-indigo-400 px-4 py-2 rounded-xl text-xs font-bold border border-indigo-500/30">
-                  {copied ? '¡Copiado!' : 'Copiar'}
-                </button>
-              </div>
-
-              <div className="text-xs text-slate-500 animate-pulse">
-                Esperando que el segundo jugador ingrese el código...
-              </div>
-            </div>
-          )}
-
-          {/* MARCADOR DEL JUEGO */}
-          {(status === 'choosing' || status === 'answering' || status === 'result' || status === 'finished') && (
-            <div className="w-full space-y-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl grid grid-cols-2 gap-4">
-                <div className="bg-indigo-950/40 border border-indigo-500/40 p-3 rounded-2xl text-center">
-                  <span className="text-xs text-indigo-400 font-bold block truncate">{myName || 'Tú'} (Tú)</span>
-                  <span className="text-3xl font-black text-white">{myScore} <span className="text-xs text-slate-500">/ 5 pts</span></span>
-                </div>
-                <div className="bg-purple-950/40 border border-purple-500/40 p-3 rounded-2xl text-center">
-                  <span className="text-xs text-purple-400 font-bold block truncate">{rivalName || 'Rival'} (Rival)</span>
-                  <span className="text-3xl font-black text-white">{rivalScore} <span className="text-xs text-slate-500">/ 5 pts</span></span>
-                </div>
-              </div>
-
-              {/* FASE A: SELECCIÓN DE CATEGORÍA */}
-              {status === 'choosing' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
-                  {!myCategory ? (
-                    <>
-                      <div className="text-center">
-                        <h3 className="text-xl font-bold text-white">Elige tu Tema</h3>
-                        <p className="text-xs text-slate-400 mt-1">Elige un tema (-1 pt si fallas) o gira la ruleta gratis (0 pts si fallas).</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        {CATEGORIES.map(cat => (
-                          <button
-                            key={cat.id}
-                            onClick={() => chooseCategory(cat.id, 'chosen')}
-                            className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left font-bold text-sm text-slate-200 transition"
-                          >
-                            {cat.name}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="pt-2 text-center">
-                        <button
-                          onClick={spinRoulette}
-                          disabled={isSpinning}
-                          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
-                        >
-                          🎰 {isSpinning ? 'Girando...' : 'Girar Ruleta Gratis (0 pts penalización)'}
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-6 space-y-3">
-                      <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
-                      <h3 className="text-xl font-bold text-white">¡Categoría Elegida!</h3>
-                      <p className="text-xs text-slate-400">Esperando que {rivalName || 'el rival'} seleccione su tema...</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* FASE B: PREGUNTAS EN SIMULTÁNEO */}
-              {status === 'answering' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
-                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                    <span className="text-xs font-bold uppercase text-indigo-400">
-                      Categoría: {CATEGORIES.find(c => c.id === myCategory)?.name}
-                    </span>
-                    <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">
-                      <span className="text-xs text-slate-400">Tiempo:</span>
-                      <span className={`text-base font-mono font-black ${timer <= 5 ? 'text-rose-500' : 'text-amber-400'}`}>
-                        {timer}s
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-center py-2">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                      {myQuestion ? myQuestion.question : 'Cargando pregunta...'}
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    {myQuestion?.options.map((opt, idx) => {
-                      const isMySelection = myAnswer === idx;
-
-                      return (
-                        <button
-                          key={idx}
-                          disabled={isConfirmed}
-                          onClick={() => selectOption(idx)}
-                          className={`p-4 rounded-2xl border font-semibold text-left transition flex justify-between items-center ${
-                            isMySelection 
-                              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-2 ring-indigo-400/50' 
-                              : 'bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-200'
-                          } ${isConfirmed ? 'opacity-80 cursor-default' : 'cursor-pointer'}`}
-                        >
-                          <span>{opt}</span>
-                          <span className="text-xs font-mono text-slate-500">[{String.fromCharCode(65 + idx)}]</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="pt-2 flex flex-col gap-2 items-center">
-                    {!isConfirmed ? (
-                      <>
-                        <button
-                          onClick={confirmFinalAnswer}
-                          disabled={myAnswer === null}
-                          className={`w-full py-3.5 rounded-xl font-extrabold text-white transition ${
-                            myAnswer !== null 
-                              ? 'bg-emerald-600 hover:bg-emerald-500 cursor-pointer shadow-lg' 
-                              : 'bg-slate-800 opacity-50 cursor-not-allowed'
-                          }`}
-                        >
-                          {myAnswer !== null ? 'Confirmar Respuesta' : 'Elige una opción arriba'}
-                        </button>
-                        <p className="text-[11px] text-slate-400">Puedes cambiar tu opción seleccionada antes de confirmar o agotar los {timer}s.</p>
-                      </>
-                    ) : (
-                      <div className="text-center py-2">
-                        <p className="text-sm font-bold text-emerald-400">✓ Respuesta Enviada</p>
-                        <p className="text-xs text-slate-500 mt-1">Esperando que {rivalName || 'el rival'} responda...</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* FASE C: RESULTADOS DE LA RONDA */}
-              {status === 'result' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-xl">
-                  <h3 className="text-2xl font-bold text-white">Resultados de la Ronda</h3>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                      <span className="text-xs font-bold text-indigo-400">{myName} (Tú)</span>
-                      <p className={`text-sm font-bold ${myAnswer === myQuestion?.answer ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {myAnswer === myQuestion?.answer ? '¡Correcto! (+1 pt)' : 'Incorrecto'}
-                      </p>
-                    </div>
-
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                      <span className="text-xs font-bold text-purple-400">{rivalName}</span>
-                      <p className="text-sm font-bold text-slate-300">
-                        {rivalAnswer !== -1 ? 'Respondió' : 'Sin tiempo'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={triggerNextRound}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
-                  >
-                    Siguiente Ronda ➔
-                  </button>
-                </div>
-              )}
-
-              {/* FASE D: FIN DEL JUEGO */}
-              {status === 'finished' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
-                  <h2 className="text-3xl font-black text-white">¡Partida Finalizada!</h2>
-                  <p className="text-xl font-bold text-amber-400">
-                    🏆 Ganador: {myScore >= 5 ? myName : rivalName}
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
-                  >
-                    Volver a Jugar
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      );
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for(let i=0; i<5; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
+      return code;
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    function setStatus(msg) {
+      document.getElementById('lobby-status').innerText = msg;
+    }
+
+    function createRoom() {
+      myName = document.getElementById('input-username').value.trim() || 'Jugador 1';
+      const code = generateRoomCode();
+      isHost = true;
+
+      setStatus("Creando sala...");
+      peer = new Peer('trivia-' + code);
+
+      peer.on('open', (id) => {
+        document.getElementById('display-room-code').innerText = code;
+        document.getElementById('room-tag').classList.remove('hidden');
+        showScreen('screen-waiting');
+      });
+
+      peer.on('connection', (c) => {
+        conn = c;
+        setupConnection();
+      });
+
+      peer.on('error', (err) => {
+        setStatus("Error al crear sala. Intenta de nuevo.");
+      });
+    }
+
+    function joinRoom() {
+      myName = document.getElementById('input-username').value.trim() || 'Jugador 2';
+      const code = document.getElementById('input-room-code').value.trim().toUpperCase();
+      if(!code) { setStatus("Ingresa el código de la sala."); return; }
+
+      isHost = false;
+      setStatus("Conectando...");
+      peer = new Peer();
+
+      peer.on('open', () => {
+        conn = peer.connect('trivia-' + code);
+        setupConnection();
+      });
+
+      peer.on('error', () => {
+        setStatus("No se encontró la sala. Revisa el código.");
+      });
+    }
+
+    function setupConnection() {
+      conn.on('open', () => {
+        conn.send({ type: 'HANDSHAKE', name: myName });
+      });
+
+      conn.on('data', (data) => {
+        handleMessage(data);
+      });
+    }
+
+    function handleMessage(data) {
+      switch(data.type) {
+        case 'HANDSHAKE':
+          rivalName = data.name;
+          document.getElementById('label-me-name').innerText = myName + " (Tú)";
+          document.getElementById('label-rival-name').innerText = rivalName;
+          
+          if(isHost) {
+            conn.send({ type: 'HANDSHAKE_REPLY', name: myName });
+            startNextRound();
+          }
+          break;
+
+        case 'HANDSHAKE_REPLY':
+          rivalName = data.name;
+          document.getElementById('label-me-name').innerText = myName + " (Tú)";
+          document.getElementById('label-rival-name').innerText = rivalName;
+          break;
+
+        case 'START_ROUND':
+          currentQuestionIdx = data.qIdx;
+          loadQuestion(currentQuestionIdx);
+          showScreen('screen-game');
+          break;
+
+        case 'SUBMIT_ANSWER':
+          rivalAnswerData = data;
+          checkRoundEnd();
+          break;
+      }
+    }
+
+    function showScreen(id) {
+      ['screen-lobby', 'screen-waiting', 'screen-game', 'screen-gameover'].forEach(s => {
+        document.getElementById(s).classList.add('hidden');
+      });
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function startNextRound() {
+      myAnswerData = null;
+      rivalAnswerData = null;
+      // Seleccionar pregunta aleatoria
+      const qIdx = Math.floor(Math.random() * QUESTION_BANK.length);
+      conn.send({ type: 'START_ROUND', qIdx: qIdx });
+      currentQuestionIdx = qIdx;
+      loadQuestion(qIdx);
+      showScreen('screen-game');
+    }
+
+    function loadQuestion(idx) {
+      myAnswerData = null;
+      rivalAnswerData = null;
+      selectedOptIdx = null;
+
+      document.getElementById('waiting-rival-msg').classList.add('hidden');
+      document.getElementById('question-box').classList.remove('hidden');
+      document.getElementById('btn-confirm-answer').disabled = true;
+
+      const q = QUESTION_BANK[idx];
+      document.getElementById('category-badge').innerText = q.cat;
+      document.getElementById('question-text').innerText = q.q;
+
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      q.opts.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700/80 border border-slate-700/80 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
+        btn.onclick = () => selectOption(i);
+        btn.innerHTML = `<span>${opt}</span><div class="opt-check w-4 h-4 rounded-full border border-slate-600"></div>`;
+        container.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    function selectOption(idx) {
+      if(myAnswerData !== null) return; // Ya confirmó
+      selectedOptIdx = idx;
+
+      const btns = document.querySelectorAll('.opt-btn');
+      btns.forEach((b, i) => {
+        if(i === idx) {
+          b.className = "opt-btn w-full text-left bg-indigo-950 border-2 border-indigo-500 p-3.5 rounded-xl transition text-sm flex items-center justify-between text-indigo-200 font-medium";
+          b.querySelector('.opt-check').className = "opt-check w-4 h-4 rounded-full bg-indigo-500 border border-indigo-400";
+        } else {
+          b.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700/80 border border-slate-700/80 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
+          b.querySelector('.opt-check').className = "opt-check w-4 h-4 rounded-full border border-slate-600";
+        }
+      });
+
+      document.getElementById('btn-confirm-answer').disabled = false;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      secondsLeft = 15;
+      questionStartTime = Date.now();
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        secondsLeft--;
+        updateTimerUI();
+
+        if(secondsLeft <= 0) {
+          clearInterval(timerInterval);
+          if(myAnswerData === null) {
+            confirmAnswer(true); // Fuerza envío al agotarse tiempo
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      document.getElementById('timer-text').innerText = secondsLeft + 's';
+      const pct = (secondsLeft / 15) * 100;
+      document.getElementById('timer-bar').style.width = pct + '%';
+    }
+
+    function confirmAnswer(forceTimeout = false) {
+      if(myAnswerData !== null) return;
+      clearInterval(timerInterval);
+
+      timeSpentMs = Date.now() - questionStartTime;
+      const finalChoice = forceTimeout && selectedOptIdx === null ? -1 : selectedOptIdx;
+
+      myAnswerData = {
+        opt: finalChoice,
+        timeMs: timeSpentMs
+      };
+
+      document.getElementById('question-box').classList.add('hidden');
+      document.getElementById('waiting-rival-msg').classList.remove('hidden');
+
+      conn.send({
+        type: 'SUBMIT_ANSWER',
+        opt: myAnswerData.opt,
+        timeMs: myAnswerData.timeMs
+      });
+
+      checkRoundEnd();
+    }
+
+    function checkRoundEnd() {
+      if(myAnswerData !== null && rivalAnswerData !== null) {
+        evaluateRoundResults();
+      }
+    }
+
+    function evaluateRoundResults() {
+      const q = QUESTION_BANK[currentQuestionIdx];
+      const correctOpt = q.a;
+
+      const myCorrect = (myAnswerData.opt === correctOpt);
+      const rivalCorrect = (rivalAnswerData.opt === correctOpt);
+
+      let myPointsGained = 0;
+      let rivalPointsGained = 0;
+
+      // REGLA DE EMPATE Y DESEMPATE POR VELOCIDAD
+      if (myCorrect && rivalCorrect) {
+        // Si ambos están en 4 puntos o empatados a punto de ganar, desempatan por velocidad (milisegundos)
+        if (myScore >= 4 && rivalScore >= 4) {
+          if (myAnswerData.timeMs < rivalAnswerData.timeMs) {
+            myPointsGained = 1;
+          } else if (rivalAnswerData.timeMs < myAnswerData.timeMs) {
+            rivalPointsGained = 1;
+          } else {
+            // Si empataron exactamente en milisegundos (improbable), ambos suman
+            myPointsGained = 1;
+            rivalPointsGained = 1;
+          }
+        } else {
+          // Rondas normales: ambos suman si responden bien
+          myPointsGained = 1;
+          rivalPointsGained = 1;
+        }
+      } else {
+        if (myCorrect) myPointsGained = 1;
+        if (rivalCorrect) rivalPointsGained = 1;
+      }
+
+      myScore += myPointsGained;
+      rivalScore += rivalPointsGained;
+
+      // Actualizar Marcador
+      document.getElementById('label-me-score').innerHTML = `${myScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
+      document.getElementById('label-rival-score').innerHTML = `${rivalScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
+
+      // Comprobar Fin de Juego
+      if (myScore >= 5 || rivalScore >= 5) {
+        setTimeout(() => {
+          showGameOver();
+        }, 1200);
+      } else {
+        // Siguiente ronda (solo la inicia el Host para mantener sincronía)
+        if (isHost) {
+          setTimeout(() => {
+            startNextRound();
+          }, 2000);
+        }
+      }
+    }
+
+    function showGameOver() {
+      showScreen('screen-gameover');
+
+      if (myScore > rivalScore) {
+        document.getElementById('gameover-icon').innerText = "🏆";
+        document.getElementById('gameover-title').innerText = "¡Ganaste!";
+        document.getElementById('gameover-reason').innerText = `Superaste a ${rivalName} alcanzando los ${myScore} puntos.`;
+      } else if (rivalScore > myScore) {
+        document.getElementById('gameover-icon').innerText = "💀";
+        document.getElementById('gameover-title').innerText = "¡Derrota!";
+        document.getElementById('gameover-reason').innerText = `${rivalName} ganó la partida con ${rivalScore} puntos.`;
+      } else {
+        // En caso hipotético de empate perfecto
+        document.getElementById('gameover-icon').innerText = "🤝";
+        document.getElementById('gameover-title').innerText = "¡Empate!";
+        document.getElementById('gameover-reason').innerText = "Ambos quedaron empatados al final.";
+      }
+    }
   </script>
 </body>
 </html>
