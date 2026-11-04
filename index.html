@@ -126,6 +126,7 @@
     // 4 CATEGORÍAS EXACTAS
     const MAIN_CATEGORIES = ["Cultura General", "Ciencia", "Matemáticas", "Deportes"];
 
+    // BANCO MASIVO DE PREGUNTAS AMPLIADO
     const DB_PREGUNTAS = {
       "Cultura General": [
         { id: "cg1", q: "¿Cuál es el país más grande del mundo por superficie?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
@@ -137,7 +138,13 @@
         { id: "cg7", q: "¿Cuál es el océano más grande del planeta?", opts: ["Atlántico", "Pacífico", "Índico", "Ártico"], a: 1 },
         { id: "cg8", q: "¿En qué ciudad se encuentra el Coliseo Romano?", opts: ["Atenas", "Madrid", "Roma", "París"], a: 2 },
         { id: "cg9", q: "¿Qué país es famoso por el Taj Mahal?", opts: ["India", "Egipto", "Turquía", "Tailandia"], a: 0 },
-        { id: "cg10", q: "¿Cuál es el río más largo del mundo?", opts: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], a: 1 }
+        { id: "cg10", q: "¿Cuál es el río más largo del mundo?", opts: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], a: 1 },
+        { id: "cg11", q: "¿Cuál es la capital de Canadá?", opts: ["Toronto", "Vancouver", "Montreal", "Ottawa"], a: 3 },
+        { id: "cg12", q: "¿Quién escribió la obra 'Don Quijote de la Mancha'?", opts: ["Gabriel García Márquez", "Miguel de Cervantes", "William Shakespeare", "Pablo Neruda"], a: 1 },
+        { id: "cg13", q: "¿En qué país se originó la pizza?", opts: ["Grecia", "Francia", "Italia", "Estados Unidos"], a: 2 },
+        { id: "cg14", q: "¿Cuál es el libro sagrado del Islam?", opts: ["La Biblia", "El Torá", "El Corán", "Los Vedas"], a: 2 },
+        { id: "cg15", q: "¿Cuál es la ciudad conocida como la 'Gran Manzana'?", opts: ["Los Ángeles", "Londres", "Nueva York", "Chicago"], a: 2 },
+        { id: "cg16", q: "¿En qué monumento se encuentra la escultura del David de Miguel Ángel?", opts: ["Galería de la Academia", "El Louvre", "Museo del Prado", "Museo Británico"], a: 0 }
       ],
       "Ciencia": [
         { id: "c1", q: "¿Cuál es el elemento químico representado por el símbolo 'O'?", opts: ["Oro", "Osmeo", "Oxígeno", "Hierro"], a: 2 },
@@ -149,7 +156,12 @@
         { id: "c7", q: "¿Qué animal es considerado el mamífero más grande de la Tierra?", opts: ["Elefante Africano", "Ballena Azul", "Jirafa", "Tiburón Ballena"], a: 1 },
         { id: "c8", q: "¿Cuál es la fórmula química del agua?", opts: ["CO2", "H2O", "NaCl", "O2"], a: 1 },
         { id: "c9", q: "¿Qué fuerza nos mantiene pegados al suelo en la Tierra?", opts: ["Magnetismo", "Fricción", "Gravedad", "Presión"], a: 2 },
-        { id: "c10", q: "¿Cuál es la estrella más cercana a la Tierra?", opts: ["Alfa Centauri", "Sirio", "El Sol", "Polaris"], a: 2 }
+        { id: "c10", q: "¿Cuál es la estrella más cercana a la Tierra?", opts: ["Alfa Centauri", "Sirio", "El Sol", "Polaris"], a: 2 },
+        { id: "c11", q: "¿Qué tipo de energía produce el Sol?", opts: ["Nuclear y Térmica", "Química", "Mecánica", "Eólica"], a: 0 },
+        { id: "c12", q: "¿Qué instrumento mide la presión atmosférica?", opts: ["Termómetro", "Barómetro", "Anemómetro", "Higrómetro"], a: 1 },
+        { id: "c13", q: "¿Qué pigmento le da el color verde a las plantas?", opts: ["Melanina", "Caroteno", "Clorofila", "Hemoglobina"], a: 2 },
+        { id: "c14", q: "¿Qué planeta es conocido como el 'Planeta Rojo'?", opts: ["Venus", "Marte", "Júpiter", "Mercurio"], a: 1 },
+        { id: "c15", q: "¿Cuál es el metal líquido a temperatura ambiente?", opts: ["Mercurio", "Plomo", "Cobre", "Aluminio"], a: 0 }
       ],
       "Matemáticas": [
         { id: "m1", q: "¿Cuál es el resultado de 12 x 12?", opts: ["122", "144", "164", "148"], a: 1 },
@@ -161,7 +173,12 @@
         { id: "m7", q: "¿Cuánto es 15 + (3 x 4)?", opts: ["72", "27", "33", "60"], a: 1 },
         { id: "m8", q: "¿Cuál es el número primo más pequeño?", opts: ["0", "1", "2", "3"], a: 2 },
         { id: "m9", q: "Si un triángulo tiene ángulos de 90° y 45°, ¿cuánto mide el tercero?", opts: ["45°", "90°", "30°", "60°"], a: 0 },
-        { id: "m10", q: "¿Cuánto es 100 dividido entre 0.5?", opts: ["50", "200", "100", "25"], a: 1 }
+        { id: "m10", q: "¿Cuánto es 100 dividido entre 0.5?", opts: ["50", "200", "100", "25"], a: 1 },
+        { id: "m11", q: "¿Cuánto es 9 x 8?", opts: ["64", "72", "81", "68"], a: 1 },
+        { id: "m12", q: "¿Cuántos lados tiene un dodecágono?", opts: ["10", "12", "15", "20"], a: 1 },
+        { id: "m13", q: "¿Cuál es la suma de los ángulos internos de cualquier triángulo?", opts: ["90°", "180°", "270°", "360°"], a: 1 },
+        { id: "m14", q: "¿Cuánto es el 50% de la mitad de 100?", opts: ["50", "25", "12.5", "10"], a: 1 },
+        { id: "m15", q: "Si $x + 5 = 12$, ¿cuánto vale $x$?", opts: ["5", "6", "7", "8"], a: 2 }
       ],
       "Deportes": [
         { id: "d1", q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
@@ -173,7 +190,12 @@
         { id: "d7", q: "¿En qué país se inventó el baloncesto?", opts: ["Estados Unidos", "Canadá", "Inglaterra", "Francia"], a: 0 },
         { id: "d8", q: "¿Cuántos puntos vale un tiro libre en baloncesto?", opts: ["1 punto", "2 puntos", "3 puntos", "0.5 puntos"], a: 0 },
         { id: "d9", q: "¿En qué estilo de natación se nada boca arriba?", opts: ["Crowl", "Espalda", "Pecho", "Mariposa"], a: 1 },
-        { id: "d10", q: "¿Qué tarjeta en fútbol implica la expulsión directa de un jugador?", opts: ["Tarjeta Azul", "Tarjeta Amarilla", "Tarjeta Roja", "Tarjeta Verde"], a: 2 }
+        { id: "d10", q: "¿Qué tarjeta en fútbol implica la expulsión directa de un jugador?", opts: ["Tarjeta Azul", "Tarjeta Amarilla", "Tarjeta Roja", "Tarjeta Verde"], a: 2 },
+        { id: "d11", q: "¿En qué deporte destacó Michael Jordan?", opts: ["Fútbol Americano", "Béisbol", "Baloncesto", "Golf"], a: 2 },
+        { id: "d12", q: "¿Cuántos anillos forman el símbolo de los Juegos Olímpicos?", opts: ["4", "5", "6", "7"], a: 1 },
+        { id: "d13", q: "¿Qué deporte utiliza un 'puck' o disco rígido?", opts: ["Hockey sobre hielo", "Polo", "Golf", "Curling"], a: 0 },
+        { id: "d14", q: "¿Qué país ganó el Mundial de Fútbol en Catar 2022?", opts: ["Francia", "Croacia", "Brasil", "Argentina"], a: 3 },
+        { id: "d15", q: "¿Cuántos metros mide una piscina olímpica de largo?", opts: ["25 metros", "50 metros", "75 metros", "100 metros"], a: 1 }
       ]
     };
 
@@ -191,7 +213,7 @@
     let myCategorySelected = false;
     let rivalCategorySelected = false;
 
-    // HISTORIAL DE PREGUNTAS USADAS (Para evitar repeticiones)
+    // HISTORIAL DE PREGUNTAS USADAS
     let usedQuestionIds = new Set();
 
     let currentQuestion = null;
@@ -332,17 +354,16 @@
         finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
       }
 
-      // FILTRAR PREGUNTAS NO REPETIDAS EN LA PARTIDA
+      // FILTRAR PREGUNTAS NO REPETIDAS
       const catQuestions = DB_PREGUNTAS[finalCat];
       let availableQuestions = catQuestions.filter(q => !usedQuestionIds.has(q.id));
 
-      // Si por alguna razón ya se usaron todas las de la categoría, reiniciar filtro de esa lista
       if(availableQuestions.length === 0) {
         availableQuestions = catQuestions;
       }
 
       const pickedQ = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
-      usedQuestionIds.add(pickedQ.id); // Guardar en el historial de vistas
+      usedQuestionIds.add(pickedQ.id);
 
       currentQuestion = JSON.parse(JSON.stringify(pickedQ));
       currentQuestion.categoryName = finalCat;
