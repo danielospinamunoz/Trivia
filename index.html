@@ -1,389 +1,383 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trivia Multijugador Online 1v1</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & React DOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- PeerJS / Signal Cloud para Conexión Directa en Tiempo Real sin Login -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trivia Multijugador Online 1v1</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PeerJS WebRTC P2P CDN -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel Standalone para JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @keyframes spinWheel {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(1800deg); }
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-    <div id="root"></div>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-        // BANCO AMPLIADO DE PREGUNTAS POR CATEGORÍA
-        const QUESTION_BANK = {
-          cultura: [
-            { question: "¿Cuál es el país más grande del mundo por superficie?", options: ["Canadá", "China", "Rusia", "EE.UU."], answer: 2 },
-            { question: "¿En qué año llegó el ser humano a la Luna?", options: ["1965", "1969", "1972", "1959"], answer: 1 },
-            { question: "¿Quién pintó la Mona Lisa?", options: ["Van Gogh", "Picasso", "Leonardo da Vinci", "Michelangelo"], answer: 2 },
-            { question: "¿Cuál es la capital de Japón?", options: ["Kioto", "Osaka", "Tokio", "Hiroshima"], answer: 2 },
-            { question: "¿Qué idioma tiene más hablantes nativos?", options: ["Inglés", "Español", "Chino Mandarín", "Hindi"], answer: 2 },
-            { question: "¿En qué océano está la Isla de Pascua?", options: ["Atlántico", "Pacífico", "Índico", "Ártico"], answer: 1 },
-            { question: "¿Cuál es el río más largo del mundo?", options: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], answer: 1 },
-            { question: "¿En qué país se encuentra la Gran Pirámide de Giza?", options: ["Sudán", "Egipto", "Marruecos", "Jordania"], answer: 1 }
-          ],
-          matematicas: [
-            { question: "¿Cuál es la raíz cuadrada de 144?", options: ["10", "11", "12", "14"], answer: 2 },
-            { question: "¿Cuánto es 7 x 8?", options: ["54", "56", "62", "48"], answer: 1 },
-            { question: "¿Cómo se llama un polígono de 8 lados?", options: ["Hexágono", "Heptágono", "Octágono", "Decágono"], answer: 2 },
-            { question: "Si un triángulo mide 90° y 45°, ¿cuánto mide el 3º?", options: ["45°", "60°", "30°", "90°"], answer: 0 },
-            { question: "¿Cuál es el resultado de 2 + 3 x 4?", options: ["20", "14", "18", "12"], answer: 1 },
-            { question: "¿Cuál es el valor aproximado de Pi?", options: ["3.12", "3.1416", "3.18", "3.05"], answer: 1 }
-          ],
-          ciencias: [
-            { question: "Símbolo químico del Oxígeno:", options: ["Oro", "Osmo", "O", "Og"], answer: 2 },
-            { question: "¿Qué planeta es conocido como el 'Planeta Rojo'?", options: ["Júpiter", "Venus", "Marte", "Saturno"], answer: 2 },
-            { question: "¿Cuál es el órgano más grande del cuerpo?", options: ["Hígado", "Cerebro", "Piel", "Corazón"], answer: 2 },
-            { question: "¿Qué gas absorben las plantas?", options: ["Oxígeno", "CO2", "Nitrógeno", "Hidrógeno"], answer: 1 },
-            { question: "¿Cuál es la velocidad de la luz aprox.?", options: ["300.000 km/s", "150.000 km/s", "500.000 km/s", "1.000.000 km/s"], answer: 0 }
-          ],
-          deporte: [
-            { question: "¿Cada cuántos años son los Juegos Olímpicos?", options: ["2 años", "3 años", "4 años", "5 años"], answer: 2 },
-            { question: "¿Cuántos jugadores hay en un equipo de fútbol?", options: ["9", "10", "11", "12"], answer: 2 },
-            { question: "¿En qué deporte se utiliza el término 'Home Run'?", options: ["Béisbol", "Baloncesto", "Tenis", "Golf"], answer: 0 },
-            { question: "¿Cuánto dura un partido de fútbol oficial?", options: ["80 min", "90 min", "100 min", "60 min"], answer: 1 }
-          ]
-        };
+    // BANCO DE PREGUNTAS POR CATEGORÍA
+    const CATEGORIES = [
+      { id: 'cultura', name: 'Cultura General', color: 'from-amber-500 to-orange-600' },
+      { id: 'matematicas', name: 'Matemáticas', color: 'from-blue-500 to-indigo-600' },
+      { id: 'ciencias', name: 'Ciencias', color: 'from-emerald-500 to-teal-600' },
+      { id: 'deporte', name: 'Deportes', color: 'from-rose-500 to-red-600' }
+    ];
 
-        const CATEGORIES = [
-          { id: 'cultura', name: 'Cultura General', color: 'text-amber-400' },
-          { id: 'matematicas', name: 'Matemáticas', color: 'text-blue-400' },
-          { id: 'ciencias', name: 'Ciencias', color: 'text-emerald-400' },
-          { id: 'deporte', name: 'Deporte', color: 'text-rose-400' }
-        ];
+    const QUESTION_BANK = {
+      cultura: [
+        { question: "¿Cuál es el país más grande del mundo por superficie?", options: ["Canadá", "China", "Rusia", "Estados Unidos"], answer: 2 },
+        { question: "¿En qué año llegó el ser humano a la Luna?", options: ["1965", "1969", "1972", "1959"], answer: 1 },
+        { question: "¿Quién pintó la Mona Lisa?", options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"], answer: 2 },
+        { question: "¿Cuál es la capital de Japón?", options: ["Kioto", "Osaka", "Tokio", "Hiroshima"], answer: 2 },
+        { question: "¿Qué idioma tiene más hablantes nativos en el mundo?", options: ["Inglés", "Español", "Chino Mandarín", "Hindi"], answer: 2 }
+      ],
+      matematicas: [
+        { question: "¿Cuál es la raíz cuadrada de 144?", options: ["10", "11", "12", "14"], answer: 2 },
+        { question: "¿Cuánto es 7 x 8?", options: ["54", "56", "62", "48"], answer: 1 },
+        { question: "¿Cómo se llama un polígono de 8 lados?", options: ["Hexágono", "Heptágono", "Octágono", "Decágono"], answer: 2 },
+        { question: "Si un triángulo tiene ángulos de 90° y 45°, ¿cuánto mide el tercero?", options: ["45°", "60°", "30°", "90°"], answer: 0 },
+        { question: "Resuelve: 2 + 3 x 4", options: ["20", "14", "18", "12"], answer: 1 }
+      ],
+      ciencias: [
+        { question: "¿Cuál es el elemento químico con símbolo 'O'?", options: ["Oro", "Osmo", "Oxígeno", "Oganesón"], answer: 2 },
+        { question: "¿Qué planeta es conocido como el 'Planeta Rojo'?", options: ["Júpiter", "Venus", "Marte", "Saturno"], answer: 2 },
+        { question: "¿Cuál es el órgano más grande del cuerpo humano?", options: ["Hígado", "Cerebro", "Piel", "Corazón"], answer: 2 },
+        { question: "¿Qué gas absorben las plantas para la fotosíntesis?", options: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], answer: 1 },
+        { question: "¿Cuál es la velocidad aproximada de la luz?", options: ["300,000 km/s", "150,000 km/s", "1,000,000 km/s", "50,000 km/s"], answer: 0 }
+      ],
+      deporte: [
+        { question: "¿Cada cuántos años se celebran los Juegos Olímpicos?", options: ["2 años", "3 años", "4 años", "5 años"], answer: 2 },
+        { question: "¿Cuántos jugadores de fútbol hay en campo por equipo?", options: ["9", "10", "11", "12"], answer: 2 },
+        { question: "¿En qué deporte se utiliza el término 'Home Run'?", options: ["Béisbol", "Baloncesto", "Tenis", "Golf"], answer: 0 },
+        { question: "¿Cuánto dura un partido de fútbol profesional sin prórroga?", options: ["80 min", "90 min", "100 min", "60 min"], answer: 1 },
+        { question: "¿En qué país se inventó el baloncesto?", options: ["Canadá", "Estados Unidos", "Inglaterra", "Grecia"], answer: 1 }
+      ]
+    };
 
-        function App() {
-          const [playerName, setPlayerName] = useState('');
-          const [roomId, setRoomId] = useState('');
-          const [inputRoomId, setInputRoomId] = useState('');
-          const [role, setRole] = useState(null);
-          const [status, setStatus] = useState('menu'); // menu, waiting, choosing, answering, result, finished
-          
-          const [myScore, setMyScore] = useState(0);
-          const [rivalScore, setRivalScore] = useState(0);
-          const [rivalName, setRivalName] = useState('Rival');
-          
-          const [myCategory, setMyCategory] = useState(null);
-          const [mySelectionType, setMySelectionType] = useState(null);
-          const [myQuestion, setMyQuestion] = useState(null);
-          const [myAnswer, setMyAnswer] = useState(null);
-          
-          const [rivalCategory, setRivalCategory] = useState(null);
-          const [rivalAnswer, setRivalAnswer] = useState(null);
-          const [timer, setTimer] = useState(15);
-          const [suddenDeath, setSuddenDeath] = useState(false);
+    function App() {
+      const [myName, setMyName] = useState('');
+      const [rivalName, setRivalName] = useState('');
+      const [roomId, setRoomId] = useState('');
+      const [inputRoomCode, setInputRoomCode] = useState('');
+      const [status, setStatus] = useState('lobby'); // lobby, waiting, choosing, answering, result, finished
+      
+      const [myScore, setMyScore] = useState(0);
+      const [rivalScore, setRivalScore] = useState(0);
 
-          const peerRef = useRef(null);
-          const connRef = useRef(null);
+      const [myCategory, setMyCategory] = useState(null);
+      const [rivalCategory, setRivalCategory] = useState(null);
+      const [mySelectionType, setMySelectionType] = useState(null); // 'chosen' | 'random'
+      
+      const [myQuestion, setMyQuestion] = useState(null);
+      const [myAnswer, setMyAnswer] = useState(null); // opción seleccionada temporalmente
+      const [rivalAnswer, setRivalAnswer] = useState(null);
+      const [isConfirmed, setIsConfirmed] = useState(false); // confirma envío definitivo
 
-          // Salir y reiniciar
-          const reset = () => {
-            if (connRef.current) connRef.current.close();
-            if (peerRef.current) peerRef.current.destroy();
-            setStatus('menu');
-            setRoomId('');
-            setMyScore(0);
-            setRivalScore(0);
-            setSuddenDeath(false);
-          };
+      const [timer, setTimer] = useState(15);
+      const [isSpinning, setIsSpinning] = useState(false);
+      const [wheelRotation, setWheelRotation] = useState(0);
+      const [copied, setCopied] = useState(false);
 
-          // 1. CREAR SALA CON SERVIDOR DE CONEXIÓN LIBRE PEERJS
-          const createRoom = () => {
-            const name = playerName.trim() || 'Jugador 1';
-            const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+      const peerRef = useRef(null);
+      const connRef = useRef(null);
+
+      // CREAR SALA P2P
+      const createRoom = () => {
+        const name = myName.trim() || 'Anfitrión';
+        setMyName(name);
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const peerId = 'trivia-room-' + code;
+
+        const peer = new Peer(peerId);
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          setRoomId(code);
+          setStatus('waiting');
+        });
+
+        peer.on('connection', (conn) => {
+          connRef.current = conn;
+          conn.on('open', () => {
+            conn.send({ type: 'INIT', name });
+          });
+          conn.on('data', (data) => handleIncomingData(data, name));
+        });
+
+        peer.on('error', (err) => {
+          console.error("Error Peer:", err);
+          alert("Error de conexión. Inténtalo de nuevo.");
+        });
+      };
+
+      // UNIRSE A SALA P2P
+      const joinRoom = () => {
+        const name = myName.trim() || 'Jugador 2';
+        setMyName(name);
+        const code = inputRoomCode.trim().toUpperCase();
+        if (!code) return;
+
+        const peer = new Peer();
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          const conn = peer.connect('trivia-room-' + code);
+          connRef.current = conn;
+
+          conn.on('open', () => {
             setRoomId(code);
-            setRole('host');
-            setStatus('waiting');
-
-            // Conexión P2P gratuita
-            const peer = new Peer('TRIVIA-GAME-FREE-' + code, {
-              debug: 1
-            });
-            peerRef.current = peer;
-
-            peer.on('connection', (conn) => {
-              connRef.current = conn;
-              conn.on('data', (data) => handleIncomingData(data, name));
-              conn.on('open', () => {
-                conn.send({ type: 'INIT', name: name });
-                setStatus('choosing');
-              });
-            });
-          };
-
-          // 2. UNIRSE A SALA
-          const joinRoom = () => {
-            if (!inputRoomId.trim()) return;
-            const name = playerName.trim() || 'Jugador 2';
-            const code = inputRoomId.trim().toUpperCase();
-            setRoomId(code);
-            setRole('guest');
-
-            const peer = new Peer();
-            peerRef.current = peer;
-
-            peer.on('open', () => {
-              const conn = peer.connect('TRIVIA-GAME-FREE-' + code);
-              connRef.current = conn;
-
-              conn.on('open', () => {
-                conn.send({ type: 'INIT', name: name });
-                setStatus('choosing');
-              });
-
-              conn.on('data', (data) => handleIncomingData(data, name));
-            });
-
-            peer.on('error', () => {
-              alert("No se pudo encontrar la sala. Verifica que la otra persona haya presionado 'Crear Nueva Sala' y tenga el código visible.");
-              reset();
-            });
-          };
-
-          // MENSAJES EN TIEMPO REAL
-          const handleIncomingData = (data, myName) => {
-            if (data.type === 'INIT') {
-              setRivalName(data.name);
-              setStatus('choosing');
-            }
-            if (data.type === 'CATEGORY_CHOSEN') {
-              setRivalCategory(data.category);
-            }
-            if (data.type === 'ANSWER_SUBMITTED') {
-              setRivalAnswer(data.answer);
-            }
-            if (data.type === 'NEXT_ROUND') {
-              startNextRoundLocal();
-            }
-          };
-
-          const chooseCategory = (catId, selectionType) => {
-            setMyCategory(catId);
-            setMySelectionType(selectionType);
-            const list = QUESTION_BANK[catId];
-            const q = list[Math.floor(Math.random() * list.length)];
-            setMyQuestion(q);
-
-            if (connRef.current) {
-              connRef.current.send({ type: 'CATEGORY_CHOSEN', category: catId });
-            }
-          };
-
-          // AMBOS ELIGIERON CATEGORÍA -> INICIA CRONÓMETRO SIMULTÁNEO
-          useEffect(() => {
-            if (myCategory && rivalCategory && status === 'choosing') {
-              setStatus('answering');
-              setTimer(15);
-            }
-          }, [myCategory, rivalCategory, status]);
-
-          // TEMPORIZADOR DE 15 SEGUNDOS
-          useEffect(() => {
-            let t = null;
-            if (status === 'answering' && timer > 0) {
-              t = setInterval(() => setTimer(prev => prev - 1), 1000);
-            } else if (timer === 0 && status === 'answering') {
-              submitAnswer(-1);
-            }
-            return () => clearInterval(t);
-          }, [status, timer]);
-
-          // ENVIAR RESPUESTA
-          const submitAnswer = (optIdx) => {
-            if (myAnswer !== null) return;
-            setMyAnswer(optIdx);
-
-            if (connRef.current) {
-              connRef.current.send({ type: 'ANSWER_SUBMITTED', answer: optIdx });
-            }
-          };
-
-          // EVALUACIÓN DE PUNTOS
-          useEffect(() => {
-            if (myAnswer !== null && rivalAnswer !== null && status === 'answering') {
-              let newMyScore = myScore;
-
-              if (myQuestion && myAnswer === myQuestion.answer) {
-                newMyScore += 1;
-              } else if (mySelectionType === 'chosen' && myAnswer !== null && myAnswer !== -1) {
-                newMyScore = Math.max(0, newMyScore - 1);
-              }
-
-              setMyScore(newMyScore);
-
-              if (newMyScore >= 5 || suddenDeath) {
-                setStatus('finished');
-              } else {
-                setStatus('result');
-              }
-            }
-          }, [myAnswer, rivalAnswer, status]);
-
-          const startNextRoundLocal = () => {
-            setMyCategory(null);
-            setRivalCategory(null);
-            setMyQuestion(null);
-            setMyAnswer(null);
-            setRivalAnswer(null);
+            conn.send({ type: 'INIT', name });
             setStatus('choosing');
-          };
+          });
 
-          const nextRound = () => {
-            startNextRoundLocal();
-            if (connRef.current) {
-              connRef.current.send({ type: 'NEXT_ROUND' });
-            }
-          };
+          conn.on('data', (data) => handleIncomingData(data, name));
+        });
 
-          // VISTA 1: MENÚ INICIAL
-          if (status === 'menu') {
-            return (
-              <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
-                  <div className="text-center space-y-2">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold shadow-lg">
-                      ⚡
-                    </div>
-                    <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                      Trivia Online 1v1
-                    </h1>
-                    <p className="text-xs text-slate-400">Juego 100% gratuito en tiempo real para 2 jugadores.</p>
-                  </div>
+        peer.on('error', (err) => {
+          alert("No se pudo conectar a la sala. Verifica el código.");
+        });
+      };
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tu Nombre</label>
-                      <input
-                        type="text"
-                        placeholder="Ej. Sofía, Carlos..."
-                        value={playerName}
-                        onChange={(e) => setPlayerName(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-
-                    <button
-                      onClick={createRoom}
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition active:scale-95 cursor-pointer"
-                    >
-                      Crear Nueva Sala
-                    </button>
-
-                    <div className="relative flex py-1 items-center">
-                      <div className="flex-grow border-t border-slate-800"></div>
-                      <span className="flex-shrink mx-3 text-xs text-slate-500 uppercase">o unirme</span>
-                      <div className="flex-grow border-t border-slate-800"></div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="CÓDIGO DE SALA"
-                        value={inputRoomId}
-                        onChange={(e) => setInputRoomId(e.target.value.toUpperCase())}
-                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center uppercase tracking-widest font-mono font-bold text-white"
-                      />
-                      <button
-                        onClick={joinRoom}
-                        className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-3 rounded-xl border border-slate-700 cursor-pointer"
-                      >
-                        Unirse
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
+      // MANEJO DE MENSAJES DE RED
+      const handleIncomingData = (data, name) => {
+        if (data.type === 'INIT') {
+          setRivalName(data.name);
+          setStatus('choosing');
+        }
+        if (data.type === 'CATEGORY_CHOSEN') {
+          setRivalCategory(data.category);
+        }
+        if (data.type === 'ANSWER_SUBMITTED') {
+          setRivalAnswer(data.answer);
+          if (data.score !== undefined) {
+            setRivalScore(data.score); // Actualización inmediata del puntaje del rival
           }
+        }
+        if (data.type === 'NEXT_ROUND') {
+          startNextRoundLocal();
+        }
+      };
 
-          // VISTA 2: ESPERANDO RIVAL
-          if (status === 'waiting') {
-            return (
-              <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-2xl">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <button onClick={reset} className="text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
-                      ← Volver al Menú
-                    </button>
-                    <span className="text-xs text-indigo-400 font-bold animate-pulse">Esperando rival...</span>
-                  </div>
+      // ELEGIR CATEGORÍA INDIVIDUALMENTE
+      const chooseCategory = (catId, selectionType) => {
+        setMyCategory(catId);
+        setMySelectionType(selectionType);
+        const list = QUESTION_BANK[catId];
+        const q = list[Math.floor(Math.random() * list.length)];
+        setMyQuestion(q);
 
-                  <h2 className="text-2xl font-bold text-white">Código de tu Sala</h2>
-                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                    <span className="text-4xl font-mono font-black text-indigo-400 tracking-wider block">
-                      {roomId}
-                    </span>
-                    <p className="text-xs text-slate-400 mt-2">Dile a tu amigo/a que entre a la web e ingrese este código.</p>
-                  </div>
-                </div>
-              </div>
-            );
+        if (connRef.current) {
+          connRef.current.send({ type: 'CATEGORY_CHOSEN', category: catId });
+        }
+      };
+
+      // GIRAR RULETA ALEATORIA GRATIS (0 PTS PENALIZACIÓN)
+      const spinRoulette = () => {
+        if (isSpinning) return;
+        setIsSpinning(true);
+        const randomIdx = Math.floor(Math.random() * CATEGORIES.length);
+        const targetCat = CATEGORIES[randomIdx];
+
+        setWheelRotation(prev => prev + 1800 + (360 - (randomIdx * 90 + 45)));
+
+        setTimeout(() => {
+          setIsSpinning(false);
+          chooseCategory(targetCat.id, 'random');
+        }, 2000);
+      };
+
+      // AMBOS ELIGIERON SU TEMA -> PASAN A RESPONDER SIMULTÁNEAMENTE
+      useEffect(() => {
+        if (myCategory && rivalCategory && status === 'choosing') {
+          setStatus('answering');
+          setTimer(15);
+          setIsConfirmed(false);
+        }
+      }, [myCategory, rivalCategory, status]);
+
+      // CRONÓMETRO DE 15 SEGUNDOS
+      useEffect(() => {
+        let t = null;
+        if (status === 'answering' && timer > 0) {
+          t = setInterval(() => setTimer(prev => prev - 1), 1000);
+        } else if (timer === 0 && status === 'answering' && !isConfirmed) {
+          confirmFinalAnswer();
+        }
+        return () => clearInterval(t);
+      }, [status, timer, isConfirmed, myAnswer]);
+
+      // SELECCIONAR / CAMBIAR OPCIÓN TEMPORALMENTE
+      const selectOption = (optIdx) => {
+        if (isConfirmed) return;
+        setMyAnswer(optIdx);
+      };
+
+      // CONFIRMAR RESPUESTA DEFINITIVA Y ENVIAR AL RIVAL
+      const confirmFinalAnswer = () => {
+        setIsConfirmed(true);
+        const finalAns = myAnswer !== null ? myAnswer : -1;
+        
+        let newMyScore = myScore;
+        if (myQuestion && finalAns === myQuestion.answer) {
+          newMyScore += 1;
+        } else if (mySelectionType === 'chosen' && finalAns !== -1) {
+          newMyScore = Math.max(0, newMyScore - 1);
+        }
+        setMyScore(newMyScore);
+
+        if (connRef.current) {
+          connRef.current.send({ 
+            type: 'ANSWER_SUBMITTED', 
+            answer: finalAns,
+            score: newMyScore 
+          });
+        }
+      };
+
+      // EVALUACIÓN DE FIN DE RONDA CUANDO AMBOS RESPONDEN
+      useEffect(() => {
+        if (isConfirmed && rivalAnswer !== null && status === 'answering') {
+          if (myScore >= 5 || rivalScore >= 5) {
+            setStatus('finished');
+          } else {
+            setStatus('result');
           }
+        }
+      }, [isConfirmed, rivalAnswer, myScore, rivalScore, status]);
 
-          // VISTA PRINCIPAL DEL JUEGO
-          return (
-            <div className="min-h-screen p-3 sm:p-6 flex flex-col items-center justify-center max-w-2xl mx-auto space-y-4">
-              
-              {/* MARCADOR EN VIVO DE AMBOS JUGADORES */}
-              <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
-                <div className="flex justify-between items-center mb-3 px-1">
-                  <button onClick={reset} className="text-[11px] text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">
-                    ← Salir
+      // REINICIAR DATOS PARA LA SIGUIENTE RONDA
+      const startNextRoundLocal = () => {
+        setMyCategory(null);
+        setRivalCategory(null);
+        setMySelectionType(null);
+        setMyQuestion(null);
+        setMyAnswer(null);
+        setRivalAnswer(null);
+        setIsConfirmed(false);
+        setStatus('choosing');
+      };
+
+      const triggerNextRound = () => {
+        startNextRoundLocal();
+        if (connRef.current) {
+          connRef.current.send({ type: 'NEXT_ROUND' });
+        }
+      };
+
+      const copyCode = () => {
+        navigator.clipboard.writeText(roomId);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 max-w-xl mx-auto">
+          {/* LOBBY INICIAL */}
+          {status === 'lobby' && (
+            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                  Trivia Online 1v1
+                </h1>
+                <p className="text-sm text-slate-400">Juega en tiempo real desde cualquier dispositivo.</p>
+              </div>
+
+              <div className="space-y-4 text-left">
+                <div>
+                  <label className="text-xs font-bold uppercase text-slate-400 block mb-1">Tu Nombre</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Danielo, Valen..."
+                    value={myName}
+                    onChange={(e) => setMyName(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <button
+                  onClick={createRoom}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
+                >
+                  ⚡ Crear Nueva Sala
+                </button>
+
+                <div className="flex items-center gap-2 py-2">
+                  <div className="flex-1 h-px bg-slate-800"></div>
+                  <span className="text-xs text-slate-500 uppercase">o unirse</span>
+                  <div className="flex-1 h-px bg-slate-800"></div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="CÓDIGO DE SALA"
+                    value={inputRoomCode}
+                    onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center uppercase font-mono font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={joinRoom}
+                    className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl border border-slate-700"
+                  >
+                    Unirse
                   </button>
-                  <span className="text-xs font-bold text-indigo-400">
-                    SALA: <strong className="text-white font-mono">{roomId}</strong>
-                  </span>
                 </div>
+              </div>
+            </div>
+          )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-indigo-950/40 border border-indigo-500/60 rounded-2xl">
-                    <div className="text-xs font-bold text-indigo-300 truncate">
-                      {playerName || 'Tú'} (Tú)
-                    </div>
-                    <div className="text-3xl font-black text-white mt-1">
-                      {myScore} <span className="text-xs text-slate-500 font-normal">/ 5 pts</span>
-                    </div>
-                  </div>
+          {/* ESPERANDO JUGADOR 2 */}
+          {status === 'waiting' && (
+            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
+              <h2 className="text-2xl font-bold text-white">Esperando al Rival...</h2>
+              <p className="text-sm text-slate-400">Comparte el siguiente código para iniciar:</p>
 
-                  <div className="p-3 bg-purple-950/40 border border-purple-500/60 rounded-2xl">
-                    <div className="text-xs font-bold text-purple-300 truncate">
-                      {rivalName} (Rival)
-                    </div>
-                    <div className="text-3xl font-black text-white mt-1">
-                      {rivalScore} <span className="text-xs text-slate-500 font-normal">/ 5 pts</span>
-                    </div>
-                  </div>
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                <span className="text-3xl font-mono font-black text-indigo-400 tracking-wider">{roomId}</span>
+                <button onClick={copyCode} className="bg-indigo-600/20 text-indigo-400 px-4 py-2 rounded-xl text-xs font-bold border border-indigo-500/30">
+                  {copied ? '¡Copiado!' : 'Copiar'}
+                </button>
+              </div>
+
+              <div className="text-xs text-slate-500 animate-pulse">
+                Esperando que el segundo jugador ingrese el código...
+              </div>
+            </div>
+          )}
+
+          {/* MARCADOR DEL JUEGO */}
+          {(status === 'choosing' || status === 'answering' || status === 'result' || status === 'finished') && (
+            <div className="w-full space-y-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl grid grid-cols-2 gap-4">
+                <div className="bg-indigo-950/40 border border-indigo-500/40 p-3 rounded-2xl text-center">
+                  <span className="text-xs text-indigo-400 font-bold block truncate">{myName || 'Tú'} (Tú)</span>
+                  <span className="text-3xl font-black text-white">{myScore} <span className="text-xs text-slate-500">/ 5 pts</span></span>
+                </div>
+                <div className="bg-purple-950/40 border border-purple-500/40 p-3 rounded-2xl text-center">
+                  <span className="text-xs text-purple-400 font-bold block truncate">{rivalName || 'Rival'} (Rival)</span>
+                  <span className="text-3xl font-black text-white">{rivalScore} <span className="text-xs text-slate-500">/ 5 pts</span></span>
                 </div>
               </div>
 
               {/* FASE A: SELECCIÓN DE CATEGORÍA */}
               {status === 'choosing' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 text-center shadow-xl">
-                  {myCategory ? (
-                    <div className="py-8 space-y-3">
-                      <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30 text-2xl font-bold">
-                        ✓
-                      </div>
-                      <h3 className="text-xl font-bold text-white">¡Categoría Elegida!</h3>
-                      <p className="text-xs text-slate-400 animate-pulse">
-                        Esperando que <strong>{rivalName}</strong> elija su tema...
-                      </p>
-                    </div>
-                  ) : (
+                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
+                  {!myCategory ? (
                     <>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">Elige tu tema para esta ronda</h3>
-                        <p className="text-xs text-slate-400 mt-1">Directa: -1 pt si fallas | Ruleta: 0 pt si fallas</p>
+                      <div className="text-center">
+                        <h3 className="text-xl font-bold text-white">Elige tu Tema</h3>
+                        <p className="text-xs text-slate-400 mt-1">Elige un tema (-1 pt si fallas) o gira la ruleta gratis (0 pts si fallas).</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -391,31 +385,34 @@
                           <button
                             key={cat.id}
                             onClick={() => chooseCategory(cat.id, 'chosen')}
-                            className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-left hover:border-indigo-500 transition cursor-pointer"
+                            className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500 text-left font-bold text-sm text-slate-200 transition"
                           >
-                            <span className={`font-bold text-sm block ${cat.color}`}>{cat.name}</span>
-                            <span className="text-[10px] text-amber-400 block mt-1">-1 pt si fallas</span>
+                            {cat.name}
                           </button>
                         ))}
                       </div>
 
-                      <div className="pt-4 border-t border-slate-800">
+                      <div className="pt-2 text-center">
                         <button
-                          onClick={() => {
-                            const randomCat = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
-                            chooseCategory(randomCat.id, 'random');
-                          }}
-                          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition cursor-pointer"
+                          onClick={spinRoulette}
+                          disabled={isSpinning}
+                          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
                         >
-                          Girar Ruleta Gratis (0 pt al fallar)
+                          🎰 {isSpinning ? 'Girando...' : 'Girar Ruleta Gratis (0 pts penalización)'}
                         </button>
                       </div>
                     </>
+                  ) : (
+                    <div className="text-center py-6 space-y-3">
+                      <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✓</div>
+                      <h3 className="text-xl font-bold text-white">¡Categoría Elegida!</h3>
+                      <p className="text-xs text-slate-400">Esperando que {rivalName || 'el rival'} seleccione su tema...</p>
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* FASE B: PREGUNTAS EN SIMULTÁNEO CON TEMPORIZADOR */}
+              {/* FASE B: PREGUNTAS EN SIMULTÁNEO */}
               {status === 'answering' && (
                 <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
                   <div className="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
@@ -424,7 +421,7 @@
                     </span>
                     <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">
                       <span className="text-xs text-slate-400">Tiempo:</span>
-                      <span className={`text-base font-mono font-black ${timer <= 5 ? 'text-rose-500 animate-ping' : 'text-amber-400'}`}>
+                      <span className={`text-base font-mono font-black ${timer <= 5 ? 'text-rose-500' : 'text-amber-400'}`}>
                         {timer}s
                       </span>
                     </div>
@@ -438,19 +435,18 @@
 
                   <div className="grid grid-cols-1 gap-3">
                     {myQuestion?.options.map((opt, idx) => {
-                      const hasAnswered = myAnswer !== null;
                       const isMySelection = myAnswer === idx;
 
                       return (
                         <button
                           key={idx}
-                          disabled={hasAnswered}
-                          onClick={() => submitAnswer(idx)}
+                          disabled={isConfirmed}
+                          onClick={() => selectOption(idx)}
                           className={`p-4 rounded-2xl border font-semibold text-left transition flex justify-between items-center ${
                             isMySelection 
-                              ? 'bg-indigo-600 border-indigo-400 text-white' 
+                              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg ring-2 ring-indigo-400/50' 
                               : 'bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-200'
-                          } ${hasAnswered ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                          } ${isConfirmed ? 'opacity-80 cursor-default' : 'cursor-pointer'}`}
                         >
                           <span>{opt}</span>
                           <span className="text-xs font-mono text-slate-500">[{String.fromCharCode(65 + idx)}]</span>
@@ -459,59 +455,84 @@
                     })}
                   </div>
 
-                  {myAnswer !== null && (
-                    <div className="text-center text-xs text-emerald-400 font-bold animate-pulse">
-                      ✓ Respuesta enviada. Esperando a {rivalName}...
-                    </div>
-                  )}
+                  <div className="pt-2 flex flex-col gap-2 items-center">
+                    {!isConfirmed ? (
+                      <>
+                        <button
+                          onClick={confirmFinalAnswer}
+                          disabled={myAnswer === null}
+                          className={`w-full py-3.5 rounded-xl font-extrabold text-white transition ${
+                            myAnswer !== null 
+                              ? 'bg-emerald-600 hover:bg-emerald-500 cursor-pointer shadow-lg' 
+                              : 'bg-slate-800 opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          {myAnswer !== null ? 'Confirmar Respuesta' : 'Elige una opción arriba'}
+                        </button>
+                        <p className="text-[11px] text-slate-400">Puedes cambiar tu opción seleccionada antes de confirmar o agotar los {timer}s.</p>
+                      </>
+                    ) : (
+                      <div className="text-center py-2">
+                        <p className="text-sm font-bold text-emerald-400">✓ Respuesta Enviada</p>
+                        <p className="text-xs text-slate-500 mt-1">Esperando que {rivalName || 'el rival'} responda...</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               {/* FASE C: RESULTADOS DE LA RONDA */}
               {status === 'result' && (
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-4 shadow-xl">
-                  <h3 className="text-xl font-extrabold text-white">Resultados de la Ronda</h3>
+                <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-6 shadow-xl">
+                  <h3 className="text-2xl font-bold text-white">Resultados de la Ronda</h3>
 
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-sm">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                      <span className="text-slate-300 font-bold">{playerName || 'Tú'}:</span>
-                      <span className={`font-bold ${myAnswer === myQuestion?.answer ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                      <span className="text-xs font-bold text-indigo-400">{myName} (Tú)</span>
+                      <p className={`text-sm font-bold ${myAnswer === myQuestion?.answer ? 'text-emerald-400' : 'text-rose-400'}`}>
                         {myAnswer === myQuestion?.answer ? '¡Correcto! (+1 pt)' : 'Incorrecto'}
-                      </span>
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                      <span className="text-xs font-bold text-purple-400">{rivalName}</span>
+                      <p className="text-sm font-bold text-slate-300">
+                        {rivalAnswer !== -1 ? 'Respondió' : 'Sin tiempo'}
+                      </p>
                     </div>
                   </div>
 
                   <button
-                    onClick={nextRound}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition cursor-pointer"
+                    onClick={triggerNextRound}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
                   >
-                    Siguiente Ronda
+                    Siguiente Ronda ➔
                   </button>
                 </div>
               )}
 
-              {/* FASE D: GANADOR */}
+              {/* FASE D: FIN DEL JUEGO */}
               {status === 'finished' && (
                 <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
-                  <h2 className="text-3xl font-black text-amber-400">¡Partida Concluida!</h2>
-                  <p className="text-xl text-white font-bold">
-                    🏆 ¡{myScore >= 5 ? (playerName || 'Tú') : rivalName} gana el juego!
+                  <h2 className="text-3xl font-black text-white">¡Partida Finalizada!</h2>
+                  <p className="text-xl font-bold text-amber-400">
+                    🏆 Ganador: {myScore >= 5 ? myName : rivalName}
                   </p>
-
                   <button
-                    onClick={reset}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition cursor-pointer"
+                    onClick={() => window.location.reload()}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition"
                   >
-                    Volver al Inicio
+                    Volver a Jugar
                   </button>
                 </div>
               )}
-
             </div>
-          );
-        }
+          )}
+        </div>
+      );
+    }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
