@@ -4,7 +4,7 @@ HTML
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trivia 1v1 Online - Edición Salón</title>
+  <title>Trivia 1v1 Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
@@ -19,7 +19,7 @@ HTML
       </div>
     </div>
 
-    <!-- PANTALLA: LOBBY INICIAL -->
+    <!-- PANTALLA: LOBBY -->
     <div id="screen-lobby" class="space-y-4">
       <div>
         <label class="block text-xs uppercase tracking-wider text-slate-400 mb-2">Tu Nombre / Apodo</label>
@@ -52,6 +52,24 @@ HTML
       <p class="text-xs text-slate-500">Comparte el código de sala con tu compañero.</p>
     </div>
 
+    <!-- PANTALLA: SELECCIÓN DE CATEGORÍA -->
+    <div id="screen-category" class="hidden space-y-4">
+      <div class="text-center mb-2">
+        <h2 class="text-lg font-bold text-slate-100">Elige tu categoría</h2>
+        <p class="text-xs text-slate-400">Si eliges tema y fallas: <span class="text-rose-400 font-bold">-1 pto</span></p>
+        <p class="text-xs text-emerald-400 font-medium">Si eliges Aleatorio y fallas: <span class="font-bold">0 ptos (Sin riesgo)</span></p>
+      </div>
+      <div id="categories-grid" class="grid grid-cols-2 gap-3">
+        <!-- Generado en JS -->
+      </div>
+      <button onclick="chooseCategory('Aleatorio')" class="w-full bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white font-bold py-3 rounded-xl transition text-sm">
+        🎲 Categoría Aleatoria (Sin penalización)
+      </button>
+      <div id="waiting-cat-msg" class="hidden text-center py-3 text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 rounded-xl">
+        Categoría elegida. Esperando a que el rival seleccione...
+      </div>
+    </div>
+
     <!-- PANTALLA: JUEGO -->
     <div id="screen-game" class="hidden space-y-5">
       <!-- Marcador -->
@@ -66,35 +84,33 @@ HTML
         </div>
       </div>
 
-      <!-- Temporizador -->
+      <!-- Temporizador (15s) -->
       <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
         <div id="timer-bar" class="bg-indigo-500 h-full w-full transition-all duration-1000 linear"></div>
       </div>
 
-      <!-- Área de Pregunta -->
+      <!-- Pregunta -->
       <div id="question-box" class="space-y-4">
         <div class="flex justify-between items-center text-xs text-slate-400">
           <span id="category-badge" class="bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">Tema</span>
           <span id="timer-text" class="font-mono text-amber-400 font-bold">15s</span>
         </div>
         
-        <h2 id="question-text" class="text-base font-semibold leading-snug text-slate-100 min-h-[3rem]">Cargando pregunta...</h2>
+        <h2 id="question-text" class="text-base font-semibold leading-snug text-slate-100 min-h-[3rem]">Cargando...</h2>
 
-        <div id="options-container" class="space-y-2.5">
-          <!-- Botones de opciones insertados dinámicamente -->
-        </div>
+        <div id="options-container" class="space-y-2.5"></div>
 
-        <button id="btn-confirm-answer" onclick="confirmAnswer()" disabled class="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition">
+        <button id="btn-confirm-answer" onclick="confirmAnswer()" disabled class="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold py-3 rounded-xl transition">
           Confirmar Respuesta
         </button>
       </div>
 
       <div id="waiting-rival-msg" class="hidden text-center py-4 text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 rounded-xl">
-        Respuesta enviada. Esperando que el rival responda...
+        Respuesta enviada. Esperando a que el rival responda...
       </div>
     </div>
 
-    <!-- PANTALLA: RESULTADO FINAL -->
+    <!-- PANTALLA: FIN DE JUEGO -->
     <div id="screen-gameover" class="hidden text-center py-8 space-y-6">
       <div id="gameover-icon" class="text-5xl">🏆</div>
       <div>
@@ -108,55 +124,44 @@ HTML
   </div>
 
   <script>
-    // BANCO MASIVO DE PREGUNTAS (Sin repeticiones cortas)
-    const QUESTION_BANK = [
-      // Cine & Serie
-      { cat: "Cine", q: "¿Cuál es la película más taquillera de la historia?", opts: ["Avatar", "Avengers: Endgame", "Titanic", "Star Wars VII"], a: 0 },
-      { cat: "Cine", q: "¿Quién dirigió la película 'El Señor de los Anillos'?", opts: ["Steven Spielberg", "Peter Jackson", "Christopher Nolan", "James Cameron"], a: 1 },
-      { cat: "Cine", q: "¿Qué actor interpreta a Iron Man en el UCM?", opts: ["Chris Evans", "Robert Downey Jr.", "Chris Hemsworth", "Mark Ruffalo"], a: 1 },
-      { cat: "Cine", q: "¿Cómo se llama el reino congelado de Elsa en Frozen?", opts: ["Arendelle", "Corona", "Aldovia", "Genovia"], a: 0 },
-      { cat: "Cine", q: "¿Qué película ganó el Óscar a Mejor Película en 2020?", opts: ["1917", "Parasite", "Joker", "Once Upon a Time in Hollywood"], a: 1 },
-      { cat: "Cine", q: "¿Cuál es el nombre del ogro verde de DreamWorks?", opts: ["Fiona", "Burro", "Shrek", "Lord Farquaad"], a: 2 },
-      { cat: "Cine", q: "¿Qué mago tiene una cicatriz en forma de rayo?", opts: ["Ron Weasley", "Harry Potter", "Draco Malfoy", "Dumbledore"], a: 1 },
-      { cat: "Cine", q: "¿En qué año se estrenó la primera película de Toy Story?", opts: ["1992", "1995", "1998", "2000"], a: 1 },
-      
-      // Ciencia & Naturaleza
-      { cat: "Ciencia", q: "¿Cuál es el planeta más grande del sistema solar?", opts: ["Saturno", "Neptuno", "Júpiter", "Tierra"], a: 2 },
-      { cat: "Ciencia", q: "¿Cuál es el símbolo químico del Oro?", opts: ["Ag", "Au", "Fe", "Or"], a: 1 },
-      { cat: "Ciencia", q: "¿Qué órgano del cuerpo humano bombea sangre?", opts: ["Pulmón", "Hígado", "Cerebro", "Corazón"], a: 3 },
-      { cat: "Ciencia", q: "¿Cuál es el gas más abundante en la atmósfera terrestre?", opts: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], a: 2 },
-      { cat: "Ciencia", q: "¿Cuántos huesos tiene el cuerpo humano adulto?", opts: ["206", "300", "180", "250"], a: 0 },
-      { cat: "Ciencia", q: "¿Qué velocidad tiene la luz aproximadamente en el vacío?", opts: ["150,000 km/s", "300,000 km/s", "500,000 km/s", "1,000,000 km/s"], a: 1 },
-      { cat: "Ciencia", q: "¿Cuál es el animal terrestre más rápido del mundo?", opts: ["León", "Guepardo", "Gacela", "Caballo"], a: 1 },
-      { cat: "Ciencia", q: "¿Qué mamífero es capaz de volar?", opts: ["Ardilla voladora", "Murciélago", "Pingüino", "Ornitorrinco"], a: 1 },
+    // 4 CATEGORÍAS EXACTAS CON BANCO AMPLIO
+    const MAIN_CATEGORIES = ["Cultura General", "Ciencia", "Matemáticas", "Deportes"];
 
-      // Geografía
-      { cat: "Geografía", q: "¿Cuál es la capital de Australia?", opts: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
-      { cat: "Geografía", q: "¿En qué continente se encuentra Egipto?", opts: ["Asia", "África", "Europa", "Oceanía"], a: 1 },
-      { cat: "Geografía", q: "¿Cuál es el río más largo del mundo?", opts: ["Nilo", "Amazonas", "Misisipi", "Yangtsé"], a: 1 },
-      { cat: "Geografía", q: "¿Qué país tiene la mayor superficie territorial?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
-      { cat: "Geografía", q: "¿Cuál es el océano más grande de la Tierra?", opts: ["Atlántico", "Índico", "Pacífico", "Ártico"], a: 2 },
-      { cat: "Geografía", q: "¿En qué país se encuentran las ruinas de Machu Picchu?", opts: ["Colombia", "Chile", "Perú", "Bolivia"], a: 2 },
-      { cat: "Geografía", q: "¿Cuál es la capital de Francia?", opts: ["Marsella", "París", "Lyon", "Niza"], a: 1 },
-      { cat: "Geografía", q: "¿Qué desierto es el más cálido y extenso del mundo?", opts: ["Atacama", "Gobi", "Sahara", "Kalahari"], a: 2 },
+    const DB_PREGUNTAS = {
+      "Cultura General": [
+        { q: "¿Cuál es el país más grande del mundo por superficie?", opts: ["Canadá", "China", "Rusia", "Estados Unidos"], a: 2 },
+        { q: "¿En qué país se encuentra la torre Eiffel?", opts: ["Italia", "Francia", "España", "Alemania"], a: 1 },
+        { q: "¿Cuál es la capital de Australia?", opts: ["Sídney", "Melbourne", "Canberra", "Brisbane"], a: 2 },
+        { q: "¿Quién pintó la Mona Lisa?", opts: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Miguel Ángel"], a: 2 },
+        { q: "¿En qué año llegó Cristóbal Colón a América?", opts: ["1492", "1500", "1488", "1512"], a: 0 },
+        { q: "¿Cuál es el idioma más hablado del mundo por hablantes nativos?", opts: ["Inglés", "Español", "Chino Mandarín", "Hindi"], a: 2 }
+      ],
+      "Ciencia": [
+        { q: "¿Cuál es el elemento químico representado por el símbolo 'O'?", opts: ["Oro", "Osmeo", "Oxígeno", "Hierro"], a: 2 },
+        { q: "¿Cuál es el planeta más grande de nuestro sistema solar?", opts: ["Saturno", "Neptuno", "Júpiter", "Tierra"], a: 2 },
+        { q: "¿Qué órgano del cuerpo humano se encarga de bombear la sangre?", opts: ["Pulmón", "Hígado", "Cerebro", "Corazón"], a: 3 },
+        { q: "¿Cuál es la velocidad de la luz en el vacío?", opts: ["150,000 km/s", "300,000 km/s", "500,000 km/s", "1,000,000 km/s"], a: 1 },
+        { q: "¿Cuántos huesos tiene un cuerpo humano adulto?", opts: ["206", "300", "180", "250"], a: 0 },
+        { q: "¿Cuál es el gas más abundante en la atmósfera terrestre?", opts: ["Oxígeno", "Dióxido de Carbono", "Nitrógeno", "Hidrógeno"], a: 2 }
+      ],
+      "Matemáticas": [
+        { q: "¿Cuál es el resultado de 12 x 12?", opts: ["122", "144", "164", "148"], a: 1 },
+        { q: "¿Cuál es el valor aproximado de Pi (π)?", opts: ["3.1416", "2.7182", "1.6180", "3.4116"], a: 0 },
+        { q: "¿Cuánto es la raíz cuadrada de 81?", opts: ["7", "8", "9", "10"], a: 2 },
+        { q: "¿Cuál es el resultado de 7 cubed (7³)?", opts: ["243", "343", "49", "512"], a: 1 },
+        { q: "¿Cómo se llama un polígono de 8 lados?", opts: ["Hexágono", "Heptágono", "Octágono", "Decágono"], a: 2 },
+        { q: "¿Cuánto es el 20% de 150?", opts: ["25", "30", "35", "40"], a: 1 }
+      ],
+      "Deportes": [
+        { q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
+        { q: "¿Qué país ha ganado más Copas Mundiales de fútbol?", opts: ["Alemania", "Brasil", "Argentina", "Italia"], a: 1 },
+        { q: "¿Cuántos jugadores hay en cancha por equipo en un partido de fútbol?", opts: ["9", "10", "11", "12"], a: 2 },
+        { q: "¿En qué deporte se utiliza el término 'Strike'?", opts: ["Béisbol", "Tenis", "Baloncesto", "Fútbol"], a: 0 },
+        { q: "¿Quién ha ganado más títulos de Grand Slam en tenis masculino?", opts: ["Roger Federer", "Rafael Nadal", "Novak Djokovic", "Carlos Alcaraz"], a: 2 }
+      ]
+    };
 
-      // Historia
-      { cat: "Historia", q: "¿En qué año llegó Cristóbal Colón a América?", opts: ["1492", "1500", "1488", "1512"], a: 0 },
-      { cat: "Historia", q: "¿Quién fue el primer presidente de Estados Unidos?", opts: ["Abraham Lincoln", "Thomas Jefferson", "George Washington", "John Adams"], a: 2 },
-      { cat: "Historia", q: "¿En qué año finalizó la Segunda Guerra Mundial?", opts: ["1918", "1939", "1945", "1950"], a: 2 },
-      { cat: "Historia", q: "¿Qué antigua civilización construyó las pirámides de Guiza?", opts: ["Maya", "Griega", "Egipcia", "Romana"], a: 2 },
-      { cat: "Historia", q: "¿Quién fue conocido como el 'Libertador de América'?", opts: ["Simón Bolívar", "José de San Martín", "Bernardo O'Higgins", "Miguel Hidalgo"], a: 0 },
-      { cat: "Historia", q: "¿En qué país surgió la Revolución Industrial?", opts: ["Francia", "Alemania", "Gran Bretaña", "Estados Unidos"], a: 2 },
-
-      // Deportes
-      { cat: "Deportes", q: "¿Cada cuántos años se celebran los Juegos Olímpicos?", opts: ["2 años", "3 años", "4 años", "5 años"], a: 2 },
-      { cat: "Deportes", q: "¿Qué país ha ganado más Copas del Mundo de fútbol?", opts: ["Alemania", "Brasil", "Argentina", "Italia"], a: 1 },
-      { cat: "Deportes", q: "¿Cuántos jugadores hay en un equipo de baloncesto en cancha?", opts: ["5", "6", "7", "11"], a: 0 },
-      { cat: "Deportes", q: "¿En qué deporte se utiliza el término 'Home Run'?", opts: ["Béisbol", "Fútbol Americano", "Golf", "Tenis"], a: 0 },
-      { cat: "Deportes", q: "¿Quién es considerado el rey del tenis en tierra batida con más Roland Garros?", opts: ["Roger Federer", "Novak Djokovic", "Rafael Nadal", "Carlos Alcaraz"], a: 2 }
-    ];
-
-    // ESTADO DEL JUEGO
+    // VARIABLES DE ESTADO
     let peer = null;
     let conn = null;
     let isHost = false;
@@ -164,15 +169,15 @@ HTML
     let rivalName = "Rival";
     let myScore = 0;
     let rivalScore = 0;
-    
-    let currentQuestionIdx = -1;
+
+    let selectedCategory = "";
+    let isRandomChoice = false;
+    let currentQuestion = null;
     let selectedOptIdx = null;
-    let timeSpentMs = 0;
     let questionStartTime = 0;
-    
     let timerInterval = null;
     let secondsLeft = 15;
-    
+
     let myAnswerData = null;
     let rivalAnswerData = null;
 
@@ -195,7 +200,7 @@ HTML
       setStatus("Creando sala...");
       peer = new Peer('trivia-' + code);
 
-      peer.on('open', (id) => {
+      peer.on('open', () => {
         document.getElementById('display-room-code').innerText = code;
         document.getElementById('room-tag').classList.remove('hidden');
         showScreen('screen-waiting');
@@ -206,15 +211,13 @@ HTML
         setupConnection();
       });
 
-      peer.on('error', (err) => {
-        setStatus("Error al crear sala. Intenta de nuevo.");
-      });
+      peer.on('error', () => setStatus("Error al crear sala. Intenta de nuevo."));
     }
 
     function joinRoom() {
       myName = document.getElementById('input-username').value.trim() || 'Jugador 2';
       const code = document.getElementById('input-room-code').value.trim().toUpperCase();
-      if(!code) { setStatus("Ingresa el código de la sala."); return; }
+      if(!code) { setStatus("Ingresa el código."); return; }
 
       isHost = false;
       setStatus("Conectando...");
@@ -225,9 +228,7 @@ HTML
         setupConnection();
       });
 
-      peer.on('error', () => {
-        setStatus("No se encontró la sala. Revisa el código.");
-      });
+      peer.on('error', () => setStatus("No se encontró la sala. Revisa el código."));
     }
 
     function setupConnection() {
@@ -235,9 +236,7 @@ HTML
         conn.send({ type: 'HANDSHAKE', name: myName });
       });
 
-      conn.on('data', (data) => {
-        handleMessage(data);
-      });
+      conn.on('data', (data) => handleMessage(data));
     }
 
     function handleMessage(data) {
@@ -246,10 +245,9 @@ HTML
           rivalName = data.name;
           document.getElementById('label-me-name').innerText = myName + " (Tú)";
           document.getElementById('label-rival-name').innerText = rivalName;
-          
           if(isHost) {
             conn.send({ type: 'HANDSHAKE_REPLY', name: myName });
-            startNextRound();
+            openCategorySelection();
           }
           break;
 
@@ -257,11 +255,12 @@ HTML
           rivalName = data.name;
           document.getElementById('label-me-name').innerText = myName + " (Tú)";
           document.getElementById('label-rival-name').innerText = rivalName;
+          openCategorySelection();
           break;
 
-        case 'START_ROUND':
-          currentQuestionIdx = data.qIdx;
-          loadQuestion(currentQuestionIdx);
+        case 'START_QUESTION':
+          currentQuestion = data.question;
+          loadQuestionUI(currentQuestion);
           showScreen('screen-game');
           break;
 
@@ -273,24 +272,52 @@ HTML
     }
 
     function showScreen(id) {
-      ['screen-lobby', 'screen-waiting', 'screen-game', 'screen-gameover'].forEach(s => {
+      ['screen-lobby', 'screen-waiting', 'screen-category', 'screen-game', 'screen-gameover'].forEach(s => {
         document.getElementById(s).classList.add('hidden');
       });
       document.getElementById(id).classList.remove('hidden');
     }
 
-    function startNextRound() {
-      myAnswerData = null;
-      rivalAnswerData = null;
-      // Seleccionar pregunta aleatoria
-      const qIdx = Math.floor(Math.random() * QUESTION_BANK.length);
-      conn.send({ type: 'START_ROUND', qIdx: qIdx });
-      currentQuestionIdx = qIdx;
-      loadQuestion(qIdx);
-      showScreen('screen-game');
+    function openCategorySelection() {
+      const grid = document.getElementById('categories-grid');
+      grid.innerHTML = '';
+      document.getElementById('waiting-cat-msg').classList.add('hidden');
+
+      MAIN_CATEGORIES.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = "bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-white font-bold p-4 rounded-xl transition text-sm";
+        btn.innerText = cat;
+        btn.onclick = () => chooseCategory(cat);
+        grid.appendChild(btn);
+      });
+
+      showScreen('screen-category');
     }
 
-    function loadQuestion(idx) {
+    function chooseCategory(cat) {
+      selectedCategory = cat;
+      isRandomChoice = (cat === 'Aleatorio');
+      document.getElementById('waiting-cat-msg').classList.remove('hidden');
+
+      if(isHost) {
+        let finalCat = cat;
+        if(isRandomChoice) {
+          finalCat = MAIN_CATEGORIES[Math.floor(Math.random() * MAIN_CATEGORIES.length)];
+        }
+        const catQuestions = DB_PREGUNTAS[finalCat];
+        const randomQ = catQuestions[Math.floor(Math.random() * catQuestions.length)];
+        randomQ.categoryName = finalCat;
+
+        setTimeout(() => {
+          conn.send({ type: 'START_QUESTION', question: randomQ });
+          currentQuestion = randomQ;
+          loadQuestionUI(currentQuestion);
+          showScreen('screen-game');
+        }, 500);
+      }
+    }
+
+    function loadQuestionUI(q) {
       myAnswerData = null;
       rivalAnswerData = null;
       selectedOptIdx = null;
@@ -299,8 +326,7 @@ HTML
       document.getElementById('question-box').classList.remove('hidden');
       document.getElementById('btn-confirm-answer').disabled = true;
 
-      const q = QUESTION_BANK[idx];
-      document.getElementById('category-badge').innerText = q.cat;
+      document.getElementById('category-badge').innerText = q.categoryName || "Trivia";
       document.getElementById('question-text').innerText = q.q;
 
       const container = document.getElementById('options-container');
@@ -308,7 +334,7 @@ HTML
 
       q.opts.forEach((opt, i) => {
         const btn = document.createElement('button');
-        btn.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700/80 border border-slate-700/80 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
+        btn.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
         btn.onclick = () => selectOption(i);
         btn.innerHTML = `<span>${opt}</span><div class="opt-check w-4 h-4 rounded-full border border-slate-600"></div>`;
         container.appendChild(btn);
@@ -317,8 +343,9 @@ HTML
       startTimer();
     }
 
+    // Permite cambiar opción libremente antes de confirmar
     function selectOption(idx) {
-      if(myAnswerData !== null) return; // Ya confirmó
+      if(myAnswerData !== null) return;
       selectedOptIdx = idx;
 
       const btns = document.querySelectorAll('.opt-btn');
@@ -327,7 +354,7 @@ HTML
           b.className = "opt-btn w-full text-left bg-indigo-950 border-2 border-indigo-500 p-3.5 rounded-xl transition text-sm flex items-center justify-between text-indigo-200 font-medium";
           b.querySelector('.opt-check').className = "opt-check w-4 h-4 rounded-full bg-indigo-500 border border-indigo-400";
         } else {
-          b.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700/80 border border-slate-700/80 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
+          b.className = "opt-btn w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl transition text-sm flex items-center justify-between";
           b.querySelector('.opt-check').className = "opt-check w-4 h-4 rounded-full border border-slate-600";
         }
       });
@@ -348,7 +375,7 @@ HTML
         if(secondsLeft <= 0) {
           clearInterval(timerInterval);
           if(myAnswerData === null) {
-            confirmAnswer(true); // Fuerza envío al agotarse tiempo
+            confirmAnswer(true);
           }
         }
       }, 1000);
@@ -364,12 +391,13 @@ HTML
       if(myAnswerData !== null) return;
       clearInterval(timerInterval);
 
-      timeSpentMs = Date.now() - questionStartTime;
+      const timeSpentMs = Date.now() - questionStartTime;
       const finalChoice = forceTimeout && selectedOptIdx === null ? -1 : selectedOptIdx;
 
       myAnswerData = {
         opt: finalChoice,
-        timeMs: timeSpentMs
+        timeMs: timeSpentMs,
+        isRandom: isRandomChoice
       };
 
       document.getElementById('question-box').classList.add('hidden');
@@ -378,7 +406,8 @@ HTML
       conn.send({
         type: 'SUBMIT_ANSWER',
         opt: myAnswerData.opt,
-        timeMs: myAnswerData.timeMs
+        timeMs: myAnswerData.timeMs,
+        isRandom: myAnswerData.isRandom
       });
 
       checkRoundEnd();
@@ -391,57 +420,56 @@ HTML
     }
 
     function evaluateRoundResults() {
-      const q = QUESTION_BANK[currentQuestionIdx];
-      const correctOpt = q.a;
-
+      const correctOpt = currentQuestion.a;
       const myCorrect = (myAnswerData.opt === correctOpt);
       const rivalCorrect = (rivalAnswerData.opt === correctOpt);
 
       let myPointsGained = 0;
       let rivalPointsGained = 0;
 
-      // REGLA DE EMPATE Y DESEMPATE POR VELOCIDAD
+      // DESEMPATE POR VELOCIDAD SI EMPATAN EN 4 PUNTOS
       if (myCorrect && rivalCorrect) {
-        // Si ambos están en 4 puntos o empatados a punto de ganar, desempatan por velocidad (milisegundos)
         if (myScore >= 4 && rivalScore >= 4) {
           if (myAnswerData.timeMs < rivalAnswerData.timeMs) {
             myPointsGained = 1;
           } else if (rivalAnswerData.timeMs < myAnswerData.timeMs) {
             rivalPointsGained = 1;
           } else {
-            // Si empataron exactamente en milisegundos (improbable), ambos suman
             myPointsGained = 1;
             rivalPointsGained = 1;
           }
         } else {
-          // Rondas normales: ambos suman si responden bien
           myPointsGained = 1;
           rivalPointsGained = 1;
         }
       } else {
-        if (myCorrect) myPointsGained = 1;
-        if (rivalCorrect) rivalPointsGained = 1;
+        // CÁLCULO DE PENALIZACIÓN / PUNTAJE
+        if (myCorrect) {
+          myPointsGained = 1;
+        } else {
+          // Si eligió categoría específica y falló -> resta 1 punto. Si fue aleatorio -> 0
+          myPointsGained = myAnswerData.isRandom ? 0 : -1;
+        }
+
+        if (rivalCorrect) {
+          rivalPointsGained = 1;
+        } else {
+          rivalPointsGained = rivalAnswerData.isRandom ? 0 : -1;
+        }
       }
 
-      myScore += myPointsGained;
-      rivalScore += rivalPointsGained;
+      // Evitar puntajes negativos
+      myScore = Math.max(0, myScore + myPointsGained);
+      rivalScore = Math.max(0, rivalScore + rivalPointsGained);
 
-      // Actualizar Marcador
+      // Actualización de marcador
       document.getElementById('label-me-score').innerHTML = `${myScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
       document.getElementById('label-rival-score').innerHTML = `${rivalScore} <span class="text-xs text-slate-500 font-normal">/ 5 pts</span>`;
 
-      // Comprobar Fin de Juego
       if (myScore >= 5 || rivalScore >= 5) {
-        setTimeout(() => {
-          showGameOver();
-        }, 1200);
+        setTimeout(() => showGameOver(), 1000);
       } else {
-        // Siguiente ronda (solo la inicia el Host para mantener sincronía)
-        if (isHost) {
-          setTimeout(() => {
-            startNextRound();
-          }, 2000);
-        }
+        setTimeout(() => openCategorySelection(), 2000);
       }
     }
 
@@ -451,16 +479,15 @@ HTML
       if (myScore > rivalScore) {
         document.getElementById('gameover-icon').innerText = "🏆";
         document.getElementById('gameover-title').innerText = "¡Ganaste!";
-        document.getElementById('gameover-reason').innerText = `Superaste a ${rivalName} alcanzando los ${myScore} puntos.`;
+        document.getElementById('gameover-reason').innerText = `Victoria con ${myScore} puntos frente a ${rivalScore} de ${rivalName}.`;
       } else if (rivalScore > myScore) {
         document.getElementById('gameover-icon').innerText = "💀";
         document.getElementById('gameover-title').innerText = "¡Derrota!";
-        document.getElementById('gameover-reason').innerText = `${rivalName} ganó la partida con ${rivalScore} puntos.`;
+        document.getElementById('gameover-reason').innerText = `${rivalName} alcanzó los ${rivalScore} puntos primero.`;
       } else {
-        // En caso hipotético de empate perfecto
         document.getElementById('gameover-icon').innerText = "🤝";
         document.getElementById('gameover-title').innerText = "¡Empate!";
-        document.getElementById('gameover-reason').innerText = "Ambos quedaron empatados al final.";
+        document.getElementById('gameover-reason').innerText = "Terminaron con la misma cantidad de puntos.";
       }
     }
   </script>
